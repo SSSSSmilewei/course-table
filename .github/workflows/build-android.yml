@@ -31,6 +31,7 @@ jobs:
           flutter create --platforms=android --org cn.hieu --project-name course_table .
           rm -f test/widget_test.dart
           python tool/configure_android_notifications.py
+          python tool/configure_android_island.py
 
       - name: Install dependencies
         run: flutter pub get

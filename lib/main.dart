@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'appearance.dart';
 import 'custom_event.dart';
 import 'event_editor.dart';
+import 'island_controller.dart';
 import 'layout_policy.dart';
 import 'models.dart';
 import 'notification_service.dart';
@@ -135,6 +136,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _saveEvents(List<CustomEvent> events) async {
     await _storage.saveCustomEvents(events);
     await _notifications.scheduleCustomEvents(events);
+    unawaited(IslandController().refresh());
     if (mounted) setState(() => _events = events);
   }
 
@@ -180,6 +182,7 @@ class _HomePageState extends State<HomePage> {
       await _notifications.requestPermission();
       await _notifications.schedule(timetable, _reminderMinutes);
       await _notifications.scheduleCustomEvents(_events);
+      unawaited(IslandController().refresh());
       if (!mounted) return;
       setState(() {
         _timetable = timetable;
@@ -280,29 +283,29 @@ class _HomePageState extends State<HomePage> {
       body: _Background(
         appearance: widget.appearance,
         child: Column(
-        children: [
-          _DateHeader(
-            date: _selectedDate,
-            week: week,
-            onToday: () => setState(() => _selectedDate = _today()),
-          ),
-          _DayStrip(
-            timetable: timetable,
-            selectedDate: _selectedDate,
-            onSelected: (date) => setState(() => _selectedDate = date),
-          ),
-          _NextCourseBanner(timetable: timetable, events: _events, now: _now),
-          Expanded(
-            child: _weekView
-                ? TimetableGrid(courses: timetable.coursesForWeek(week))
-                : DaySchedule(
-                    date: _selectedDate,
-                    courses: timetable.coursesForDate(_selectedDate),
-                    events: customEventsForDate(_events, _selectedDate),
-                    onEventTap: _editEvent,
-                  ),
-          ),
-        ],
+          children: [
+            _DateHeader(
+              date: _selectedDate,
+              week: week,
+              onToday: () => setState(() => _selectedDate = _today()),
+            ),
+            _DayStrip(
+              timetable: timetable,
+              selectedDate: _selectedDate,
+              onSelected: (date) => setState(() => _selectedDate = date),
+            ),
+            _NextCourseBanner(timetable: timetable, events: _events, now: _now),
+            Expanded(
+              child: _weekView
+                  ? TimetableGrid(courses: timetable.coursesForWeek(week))
+                  : DaySchedule(
+                      date: _selectedDate,
+                      courses: timetable.coursesForDate(_selectedDate),
+                      events: customEventsForDate(_events, _selectedDate),
+                      onEventTap: _editEvent,
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -469,27 +472,9 @@ class _NextCourseBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final next = nextCourse(timetable, now);
-    CustomEvent? nextEvent;
-    DateTime? nextEventStart;
-    for (var offset = 0; offset <= 120 && nextEvent == null; offset++) {
-      final date = dateOnly(now).add(Duration(days: offset));
-      for (final event in customEventsForDate(events, date)) {
-        final start = event.startOn(date);
-        if (start.isAfter(now)) {
-          nextEvent = event;
-          nextEventStart = start;
-          break;
-        }
-      }
-    }
-    final useEvent = nextEventStart != null &&
-        (next == null || nextEventStart!.isBefore(next.start));
-    if (next == null && nextEvent == null) return const SizedBox.shrink();
-    final title = useEvent ? nextEvent!.title : next!.course.name;
-    final location = useEvent ? nextEvent!.location : next!.course.room;
-    final start = useEvent ? nextEventStart! : next!.start;
-    final duration = start.difference(now);
+    final next = nextUp(timetable, events, now);
+    if (next == null) return const SizedBox.shrink();
+    final duration = next.start.difference(now);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 2),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -508,7 +493,7 @@ class _NextCourseBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '下一项 · $title',
+                  '下一项 · ${next.title}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -518,7 +503,7 @@ class _NextCourseBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  location.isEmpty ? '即将开始' : location,
+                  next.location.isEmpty ? '即将开始' : next.location,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.white70, fontSize: 12),

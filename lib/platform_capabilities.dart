@@ -4,3 +4,8 @@ bool supportsScheduledNotifications([String? operatingSystem]) {
   final system = operatingSystem ?? Platform.operatingSystem;
   return system == 'android' || system == 'ios';
 }
+
+bool supportsSystemIsland([String? operatingSystem]) {
+  final system = operatingSystem ?? Platform.operatingSystem;
+  return system == 'android';
+}
