@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'appearance.dart';
 import 'custom_event.dart';
 import 'models.dart';
+import 'plan.dart';
 
 class TimetableStorage {
   static const _key = 'timetable';
@@ -14,6 +14,10 @@ class TimetableStorage {
   static const _themeKey = 'themeMode';
   static const _backgroundKey = 'backgroundPath';
   static const _backgroundOpacityKey = 'backgroundOpacity';
+  static const _planKey = 'planItems';
+  static const _journalKey = 'journal';
+  static const _reflectionKey = 'reflection';
+  static const _showOtherWeeksKey = 'showOtherWeeks';
 
   Future<Timetable?> load() async {
     final value = (await SharedPreferences.getInstance()).getString(_key);
@@ -34,26 +38,50 @@ class TimetableStorage {
     await (await SharedPreferences.getInstance()).setInt(_reminderKey, minutes);
   }
 
-  Future<List<CustomEvent>> loadCustomEvents() async {
-    final value = (await SharedPreferences.getInstance()).getString(_eventsKey);
-    if (value == null) return [];
-    return (jsonDecode(value) as List)
-        .map((item) => CustomEvent.fromJson(item as Map<String, dynamic>))
-        .toList();
+  Future<List<CustomEvent>> loadCustomEvents() async =>
+      _loadList(_eventsKey, CustomEvent.fromJson);
+
+  Future<void> saveCustomEvents(List<CustomEvent> events) =>
+      _saveList(_eventsKey, events.map((event) => event.toJson()));
+
+  Future<List<PlanItem>> loadPlanItems() async =>
+      _loadList(_planKey, PlanItem.fromJson);
+
+  Future<void> savePlanItems(List<PlanItem> items) =>
+      _saveList(_planKey, items.map((item) => item.toJson()));
+
+  Future<List<JournalEntry>> loadJournal() async =>
+      _loadList(_journalKey, JournalEntry.fromJson);
+
+  Future<void> saveJournal(List<JournalEntry> entries) =>
+      _saveList(_journalKey, entries.map((entry) => entry.toJson()));
+
+  Future<ReflectionSettings> loadReflection() async {
+    final value = (await SharedPreferences.getInstance()).getString(_reflectionKey);
+    return value == null
+        ? const ReflectionSettings()
+        : ReflectionSettings.fromJson(jsonDecode(value) as Map<String, dynamic>);
   }
 
-  Future<void> saveCustomEvents(List<CustomEvent> events) async {
+  Future<void> saveReflection(ReflectionSettings settings) async {
     await (await SharedPreferences.getInstance())
-        .setString(_eventsKey, jsonEncode(events.map((event) => event.toJson()).toList()));
+        .setString(_reflectionKey, jsonEncode(settings.toJson()));
+  }
+
+  Future<bool> loadShowOtherWeeks() async =>
+      (await SharedPreferences.getInstance()).getBool(_showOtherWeeksKey) ?? true;
+
+  Future<void> saveShowOtherWeeks(bool value) async {
+    await (await SharedPreferences.getInstance()).setBool(_showOtherWeeksKey, value);
   }
 
   Future<AppearanceSettings> loadAppearance() async {
     final preferences = await SharedPreferences.getInstance();
     final modeName = preferences.getString(_themeKey) ?? 'system';
     return AppearanceSettings(
-      themeMode: ThemeMode.values.firstWhere(
+      themeMode: AppThemeMode.values.firstWhere(
         (mode) => mode.name == modeName,
-        orElse: () => ThemeMode.system,
+        orElse: () => AppThemeMode.system,
       ),
       backgroundPath: preferences.getString(_backgroundKey),
       backgroundOpacity: preferences.getDouble(_backgroundOpacityKey) ?? 0.25,
@@ -69,5 +97,21 @@ class TimetableStorage {
       await preferences.setString(_backgroundKey, appearance.backgroundPath!);
     }
     await preferences.setDouble(_backgroundOpacityKey, appearance.backgroundOpacity);
+  }
+
+  Future<List<T>> _loadList<T>(
+    String key,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
+    final value = (await SharedPreferences.getInstance()).getString(key);
+    if (value == null) return [];
+    return (jsonDecode(value) as List)
+        .map((item) => fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> _saveList(String key, Iterable<Map<String, dynamic>> items) async {
+    await (await SharedPreferences.getInstance())
+        .setString(key, jsonEncode(items.toList()));
   }
 }

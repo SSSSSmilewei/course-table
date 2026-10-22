@@ -70,6 +70,21 @@ class Timetable {
             .toList(),
       );
 
+  Timetable copyWith({DateTime? startDate, int? totalWeeks}) => Timetable(
+        semester: semester,
+        className: className,
+        startDate: startDate ?? this.startDate,
+        totalWeeks: totalWeeks ?? this.totalWeeks,
+        courses: courses,
+      );
+
+  /// Highest period any course uses, at least 10 so the grid keeps its shape.
+  int get periodCount => courses.fold(
+      10, (max, course) => course.endPeriod > max ? course.endPeriod : max).clamp(1, maxPeriods);
+
+  /// Whether any course in the semester falls on [weekday] (1 = Monday).
+  bool hasCoursesOn(int weekday) => courses.any((course) => course.weekday == weekday);
+
   Map<String, dynamic> toJson() => {
         'semester': semester,
         'className': className,

@@ -1,18 +1,18 @@
-import 'package:flutter/material.dart';
+enum AppThemeMode { system, light, dark }
 
 class AppearanceSettings {
   const AppearanceSettings({
-    this.themeMode = ThemeMode.system,
+    this.themeMode = AppThemeMode.system,
     this.backgroundPath,
     this.backgroundOpacity = 0.25,
   });
 
-  final ThemeMode themeMode;
+  final AppThemeMode themeMode;
   final String? backgroundPath;
   final double backgroundOpacity;
 
   AppearanceSettings copyWith({
-    ThemeMode? themeMode,
+    AppThemeMode? themeMode,
     String? backgroundPath,
     bool removeBackground = false,
     double? backgroundOpacity,
