@@ -17,7 +17,9 @@ import 'week_grid.dart';
 /// The 里课表: a week of two-period slots on top, a backlog of study cards
 /// below. Long-press a card and drop it on a slot.
 class PlanPage extends StatefulWidget {
-  const PlanPage({super.key});
+  const PlanPage({super.key, required this.reselect});
+
+  final Reselect reselect;
 
   @override
   State<PlanPage> createState() => _PlanPageState();
@@ -32,7 +34,16 @@ class _PlanPageState extends State<PlanPage> {
   bool _adding = false;
 
   @override
+  void initState() {
+    super.initState();
+    widget.reselect.addListener(_toThisWeek);
+  }
+
+  void _toThisWeek() => setState(() => _week = null);
+
+  @override
   void dispose() {
+    widget.reselect.removeListener(_toThisWeek);
     _sheet.dispose();
     _title.dispose();
     _group.dispose();
@@ -172,6 +183,7 @@ class _PlanPageState extends State<PlanPage> {
                     const SizedBox(height: 16),
                     PrimaryButton(
                       text: '导入课表',
+                      icon: AppIcons.fileImport,
                       onPressed: () => importTimetable(context),
                     ),
                   ],
@@ -471,6 +483,7 @@ class _SlotGrid extends StatelessWidget {
                 : const Color(0x4DFFFFFF),
             ink: palette.secondary,
             title: '',
+            empty: true,
           );
         }
         return AnimatedScale(
@@ -503,7 +516,23 @@ class _SlotGrid extends StatelessWidget {
     String? subtitle,
     bool done = false,
     Color? border,
+    bool empty = false,
   }) {
+    if (empty) {
+      // A faint plus says "drop a card here".
+      return Container(
+        decoration: ShapeDecoration(
+          color: fill,
+          shape: MiuixSquircleBorder(cornerRadius: 8),
+        ),
+        alignment: Alignment.center,
+        child: AppIcon(
+          AppIcons.dashedPlus,
+          size: 18,
+          color: ink.withValues(alpha: 0.45),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 3, 3, 3),
       decoration: ShapeDecoration(
@@ -671,6 +700,8 @@ class _Backlog extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
             child: Row(
               children: [
+                AppIcon(AppIcons.inbox, size: 22, color: palette.ink),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '待排 · ${cards.length} 张',
@@ -694,13 +725,25 @@ class _Backlog extends StatelessWidget {
           ),
           SizedBox(
             height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                chip('全部', null),
-                for (final group in groups) chip(group, group),
-              ],
+            // The last 24 dp fade out, hinting that more chips scroll in.
+            child: ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (rect) => LinearGradient(
+                colors: const [
+                  Color(0xFFFFFFFF),
+                  Color(0xFFFFFFFF),
+                  Color(0x00FFFFFF),
+                ],
+                stops: [0, 1 - 24 / rect.width, 1],
+              ).createShader(rect),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  chip('全部', null),
+                  for (final group in groups) chip(group, group),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 10),

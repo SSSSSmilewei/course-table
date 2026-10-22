@@ -92,7 +92,13 @@ List<_AgendaRow> _agenda(
 }
 
 class TodayPage extends StatefulWidget {
-  const TodayPage({super.key, required this.onOpenWeek});
+  const TodayPage({
+    super.key,
+    required this.onOpenWeek,
+    required this.reselect,
+  });
+
+  final Reselect reselect;
 
   final VoidCallback onOpenWeek;
 
@@ -102,9 +108,27 @@ class TodayPage extends StatefulWidget {
 
 class _TodayPageState extends State<TodayPage> {
   final _sheet = SheetController();
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.reselect.addListener(_toTop);
+  }
+
+  void _toTop() {
+    if (!_scroll.hasClients) return;
+    _scroll.animateTo(
+      0,
+      duration: const Duration(milliseconds: 360),
+      curve: const Cubic(0.2, 0.8, 0.2, 1),
+    );
+  }
 
   @override
   void dispose() {
+    widget.reselect.removeListener(_toTop);
+    _scroll.dispose();
     _sheet.dispose();
     super.dispose();
   }
@@ -139,6 +163,7 @@ class _TodayPageState extends State<TodayPage> {
       content: (padding) => Stack(
         children: [
           ListView(
+            controller: _scroll,
             padding: EdgeInsets.only(
               top: padding.top,
               bottom: padding.bottom + 24,
@@ -161,6 +186,7 @@ class _TodayPageState extends State<TodayPage> {
               else ...[
                 _NowCard(rows: rows, table: table, events: state.events),
                 SectionLabel(
+                  icon: AppIcons.timetable,
                   rows.isEmpty
                       ? '今天没有安排'
                       : '今天 $courseCount 门课 · $planCount 个自学',
@@ -250,6 +276,8 @@ class _ImportCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          IconTile(AppIcons.graduation, color: TileColors.orange, size: 44),
+          const SizedBox(height: 14),
           Text('还没有课表', style: TypeScale.card.copyWith(color: palette.ink)),
           const SizedBox(height: 4),
           Text(
@@ -259,6 +287,7 @@ class _ImportCard extends StatelessWidget {
           const SizedBox(height: 16),
           PrimaryButton(
             text: '导入课表',
+            icon: AppIcons.fileImport,
             onPressed: () => importTimetable(context),
           ),
         ],
@@ -340,6 +369,7 @@ class _NowCardState extends State<_NowCard> {
     }
 
     String badge;
+    var badgeIcon = AppIcons.clock;
     String time;
     String title;
     String? place;
@@ -365,6 +395,7 @@ class _NowCardState extends State<_NowCard> {
           : '事件';
       if (current != null) {
         badge = '$periods · 进行中';
+        badgeIcon = AppIcons.play;
         progress = ((minutes - row.start) / (row.end - row.start)).clamp(
           0.0,
           1.0,
@@ -373,6 +404,7 @@ class _NowCardState extends State<_NowCard> {
         footerRight = '还剩 ${(row.end - minutes).ceil()} 分钟';
       } else {
         badge = '$periods · 下一节';
+        badgeIcon = AppIcons.hourglass;
         final wait = Duration(seconds: ((row.start - minutes) * 60).round());
         footerLeft = '距离开始';
         footerRight = _waitText(wait);
@@ -381,12 +413,14 @@ class _NowCardState extends State<_NowCard> {
       final upcoming = nextUp(widget.table, widget.events, _now);
       if (upcoming == null) {
         badge = '今天的课都结束了';
+        badgeIcon = AppIcons.moon;
         title = '好好休息';
         time = '';
         footerLeft = '';
         footerRight = '';
       } else {
         badge = '今天的课都结束了';
+        badgeIcon = AppIcons.moon;
         title = upcoming.title;
         place = upcoming.location;
         time =
@@ -398,7 +432,7 @@ class _NowCardState extends State<_NowCard> {
     }
 
     const white = Color(0xFFFFFFFF);
-    final dim = const Color(0xFFFFFFFF).withValues(alpha: 0.88);
+    final dim = const Color(0xFFFFFFFF).withValues(alpha: 0.94);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       // Glow on a plain rounded box: squircle shadows render as a hard band.
@@ -407,9 +441,9 @@ class _NowCardState extends State<_NowCard> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x40C2410F),
-              blurRadius: 24,
-              offset: Offset(0, 10),
+              color: Color(0x2EC2410F),
+              blurRadius: 32,
+              offset: Offset(0, 8),
             ),
           ],
         ),
@@ -433,9 +467,21 @@ class _NowCardState extends State<_NowCard> {
                       color: const Color(0x33000000),
                       shape: MiuixSquircleBorder(cornerRadius: 10),
                     ),
-                    child: Text(
-                      badge,
-                      style: TypeScale.chip.copyWith(color: white),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIcon(
+                          badgeIcon,
+                          size: 14,
+                          color: white,
+                          strokeWidth: 2,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          badge,
+                          style: TypeScale.chip.copyWith(color: white),
+                        ),
+                      ],
                     ),
                   ),
                   const Spacer(),
@@ -448,7 +494,20 @@ class _NowCardState extends State<_NowCard> {
                 style: TypeScale.stat.copyWith(color: white, height: 32 / 24),
               ),
               if (place != null && place.isNotEmpty)
-                Text(place, style: TypeScale.secondary.copyWith(color: dim)),
+                Row(
+                  children: [
+                    AppIcon(AppIcons.pin, size: 14, color: dim),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        place,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TypeScale.secondary.copyWith(color: dim),
+                      ),
+                    ),
+                  ],
+                ),
               if (inner != null) ...[
                 const SizedBox(height: 10),
                 Container(
@@ -514,6 +573,8 @@ class _NowCardState extends State<_NowCard> {
                       style: TypeScale.secondary.copyWith(color: dim),
                     ),
                     const Spacer(),
+                    AppIcon(AppIcons.hourglass, size: 14, color: white),
+                    const SizedBox(width: 5),
                     Text(
                       footerRight,
                       style: TypeScale.secondary.copyWith(color: white),

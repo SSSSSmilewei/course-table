@@ -203,9 +203,15 @@ class _CourseSheet extends StatelessWidget {
               '${thisWeek != null && !course.weeks.contains(thisWeek) ? '（本周没有）' : ''}',
         ),
         const SizedBox(height: 12),
-        Text(
-          '在这节课里自学',
-          style: TypeScale.section.copyWith(color: palette.secondary),
+        Row(
+          children: [
+            AppIcon(AppIcons.study, size: 16, color: palette.secondary),
+            const SizedBox(width: 6),
+            Text(
+              '在这节课里自学',
+              style: TypeScale.section.copyWith(color: palette.secondary),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         if (plan != null) ...[
@@ -219,6 +225,7 @@ class _CourseSheet extends StatelessWidget {
               Expanded(
                 child: PrimaryButton(
                   text: plan.done ? '标为未完成' : '学完了',
+                  icon: plan.done ? AppIcons.undo : AppIcons.check,
                   onPressed: () {
                     state.upsertPlan(plan!.copyWith(done: !plan.done));
                     close();
@@ -229,6 +236,7 @@ class _CourseSheet extends StatelessWidget {
               Expanded(
                 child: SecondaryButton(
                   text: '放回待排',
+                  icon: AppIcons.inbox,
                   onPressed: () {
                     state.upsertPlan(plan!.unplaced());
                     close();
@@ -327,6 +335,7 @@ class _PlanSheet extends StatelessWidget {
               Expanded(
                 child: PrimaryButton(
                   text: plan.done ? '标为未完成' : '学完了',
+                  icon: plan.done ? AppIcons.undo : AppIcons.check,
                   onPressed: () {
                     state.upsertPlan(plan.copyWith(done: !plan.done));
                     close();
@@ -337,6 +346,7 @@ class _PlanSheet extends StatelessWidget {
               Expanded(
                 child: SecondaryButton(
                   text: '放回待排',
+                  icon: AppIcons.inbox,
                   onPressed: () {
                     state.upsertPlan(plan.unplaced());
                     close();
@@ -347,6 +357,7 @@ class _PlanSheet extends StatelessWidget {
               Expanded(
                 child: SecondaryButton(
                   text: '删除卡片',
+                  icon: AppIcons.trash,
                   onPressed: () {
                     state.deletePlan(plan.id);
                     close();
@@ -488,6 +499,14 @@ class _EventEditorState extends State<EventEditor> {
         const SizedBox(height: 8),
         MiuixArrowPreference(
           title: '日期',
+          startAction: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppIcon(
+              AppIcons.calendarCheck,
+              size: 22,
+              color: palette.secondary,
+            ),
+          ),
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           endActions: [
             value(
@@ -506,6 +525,10 @@ class _EventEditorState extends State<EventEditor> {
           ),
         MiuixArrowPreference(
           title: '开始',
+          startAction: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppIcon(AppIcons.clock, size: 22, color: palette.secondary),
+          ),
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           endActions: [value(clockText(_start))],
           onClick: () => _toggle('start'),
@@ -514,6 +537,14 @@ class _EventEditorState extends State<EventEditor> {
           _timePicker(_start, (minutes) => setState(() => _start = minutes)),
         MiuixArrowPreference(
           title: '结束',
+          startAction: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppIcon(
+              AppIcons.hourglass,
+              size: 22,
+              color: palette.secondary,
+            ),
+          ),
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           endActions: [value(clockText(_end))],
           onClick: () => _toggle('end'),
@@ -522,12 +553,20 @@ class _EventEditorState extends State<EventEditor> {
           _timePicker(_end, (minutes) => setState(() => _end = minutes)),
         MiuixSwitchPreference(
           title: '每周重复',
+          startAction: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppIcon(AppIcons.repeat, size: 22, color: palette.secondary),
+          ),
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           value: _weekly,
           onChanged: (value) => setState(() => _weekly = value),
         ),
         MiuixOverlayDropdownPreference(
           title: '提醒',
+          startAction: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: AppIcon(AppIcons.bell, size: 22, color: palette.secondary),
+          ),
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           items: [
             for (final minutes in _reminders)
@@ -554,6 +593,7 @@ class _EventEditorState extends State<EventEditor> {
               Expanded(
                 child: SecondaryButton(
                   text: '删除',
+                  icon: AppIcons.trash,
                   onPressed: () {
                     AppScope.read(context).deleteEvent(widget.event!.id);
                     widget.close();
@@ -563,7 +603,11 @@ class _EventEditorState extends State<EventEditor> {
               const SizedBox(width: 12),
             ],
             Expanded(
-              child: PrimaryButton(text: '保存', onPressed: _save),
+              child: PrimaryButton(
+                text: '保存',
+                icon: AppIcons.check,
+                onPressed: _save,
+              ),
             ),
           ],
         ),

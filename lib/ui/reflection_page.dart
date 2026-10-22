@@ -140,9 +140,20 @@ class _ReflectionPageState extends State<ReflectionPage>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        '${evening ? '晚间' : '晨间'}一分钟 · ${clockText(now.hour * 60 + now.minute)}',
-                        style: TypeScale.secondary.copyWith(color: cream),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppIcon(
+                            evening ? AppIcons.moon : AppIcons.sunrise,
+                            size: 16,
+                            color: cream,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${evening ? '晚间' : '晨间'}一分钟 · ${clockText(now.hour * 60 + now.minute)}',
+                            style: TypeScale.secondary.copyWith(color: cream),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -215,9 +226,20 @@ class _ReflectionPageState extends State<ReflectionPage>
                       if (evening && todayPlans.isNotEmpty) ...[
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: Text(
-                            '今天的自学',
-                            style: TypeScale.section.copyWith(color: cream),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const AppIcon(
+                                AppIcons.study,
+                                size: 16,
+                                color: cream,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '今天的自学',
+                                style: TypeScale.section.copyWith(color: cream),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -283,9 +305,20 @@ class _ReflectionPageState extends State<ReflectionPage>
                       ],
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          evening ? '一句话心得' : '今天最重要的一件事',
-                          style: TypeScale.section.copyWith(color: cream),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppIcon(
+                              evening ? AppIcons.pen : AppIcons.target,
+                              size: 16,
+                              color: cream,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              evening ? '一句话心得' : '今天最重要的一件事',
+                              style: TypeScale.section.copyWith(color: cream),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -321,16 +354,21 @@ class _ReflectionPageState extends State<ReflectionPage>
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: MiuixTextButton(
-                              '写进今日日志',
+                            child: GelButton(
+                              label: '写进今日日志',
                               onPressed: _save,
-                              colors: MiuixButtonColors(
-                                color: cream,
-                                disabledColor: const Color(0x80FFF6EE),
-                                contentColor: evening
+                              height: 50,
+                              color: cream,
+                              foreground: evening
+                                  ? const Color(0xFF4A1E1A)
+                                  : const Color(0xFF8F3508),
+                              icon: AppIcon(
+                                AppIcons.pen,
+                                size: 18,
+                                strokeWidth: 2,
+                                color: evening
                                     ? const Color(0xFF4A1E1A)
                                     : const Color(0xFF8F3508),
-                                disabledContentColor: const Color(0x808F3508),
                               ),
                             ),
                           ),

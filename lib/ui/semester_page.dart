@@ -109,12 +109,12 @@ class SemesterPage extends StatelessWidget {
               ],
             ),
           ),
-          const SectionLabel('自学活跃度'),
+          const SectionLabel('自学活跃度', icon: AppIcons.flame),
           PageCard(
             padding: const EdgeInsets.all(14),
             child: _Heatmap(table: table, plans: state.plans, today: today),
           ),
-          const SectionLabel('每周课程'),
+          const SectionLabel('每周课程', icon: AppIcons.week),
           PageCard(
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
             child: Column(

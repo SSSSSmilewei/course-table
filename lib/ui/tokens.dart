@@ -7,7 +7,7 @@ class Brand {
   static const hero = Color(0xFFC2410F);
 
   static Color accentText(bool dark) =>
-      dark ? const Color(0xFFFF9A5C) : const Color(0xFFB8460B);
+      dark ? const Color(0xFFFF9A5C) : const Color(0xFF9C3A08);
 
   static Color tint(bool dark) => dark
       ? const Color(0x2EFF7A2E) // 18%
@@ -103,9 +103,13 @@ class Palette {
   final MiuixColors colors;
   final bool dark;
 
-  Color get ink => dark ? const Color(0xFFEDEDED) : const Color(0xFF1A1A1A);
-  Color get secondary =>
+  static Color inkOf(bool dark) =>
+      dark ? const Color(0xFFEDEDED) : const Color(0xFF1A1A1A);
+  static Color secondaryOf(bool dark) =>
       dark ? const Color(0xFF9A9A9F) : const Color(0xFF5C5C61);
+
+  Color get ink => inkOf(dark);
+  Color get secondary => secondaryOf(dark);
   Color get surface => colors.surface;
   Color get card => colors.surfaceContainer;
   Color get line => colors.dividerLine;

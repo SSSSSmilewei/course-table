@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_miuix/miuix.dart';
 
+import 'icons.dart';
+
 /// Glass over a static ambient background (after Listenly 3.0's liquid
 /// glass). Because the background is a smooth gradient, a translucent fill
 /// reads as frosted glass without a BackdropFilter; real blur is reserved
@@ -23,6 +25,24 @@ class _GlassSpec {
   final Color edgeBottom;
   final BoxShadow shadow;
 }
+
+/// The ambient gradient's color stops (at 0, .36, .66, 1).
+List<Color> ambientStops(bool dark) => dark
+    ? const [
+        Color(0xFF1B120D),
+        Color(0xFF231712),
+        Color(0xFF171A1A),
+        Color(0xFF0F1312),
+      ]
+    : const [
+        Color(0xFFF4E6D8),
+        Color(0xFFEBD9CB),
+        Color(0xFFE7E2D6),
+        Color(0xFFD8DFD5),
+      ];
+
+/// The fill a glass surface lays over the background (for contrast checks).
+Color glassFill(GlassKind kind, bool dark) => _spec(kind, dark).fill;
 
 _GlassSpec _spec(GlassKind kind, bool dark) => switch ((kind, dark)) {
   (GlassKind.regular, false) => const _GlassSpec(
@@ -156,19 +176,7 @@ class AmbientBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: const Alignment(-0.6, -1),
               end: const Alignment(0.6, 1),
-              colors: dark
-                  ? const [
-                      Color(0xFF1B120D),
-                      Color(0xFF231712),
-                      Color(0xFF171A1A),
-                      Color(0xFF0F1312),
-                    ]
-                  : const [
-                      Color(0xFFF4E6D8),
-                      Color(0xFFEBD9CB),
-                      Color(0xFFE7E2D6),
-                      Color(0xFFD8DFD5),
-                    ],
+              colors: ambientStops(dark),
               stops: const [0, 0.36, 0.66, 1],
             ),
           ),
@@ -202,8 +210,11 @@ class GlassSegmented extends StatelessWidget {
     required this.selected,
     required this.onChanged,
     this.height = 40,
+    this.icons,
   });
 
+  /// Optional SVG icon markup per segment (see AppIcons).
+  final List<String>? icons;
   final List<String> labels;
   final int selected;
   final ValueChanged<int> onChanged;
@@ -300,14 +311,27 @@ class GlassSegmented extends StatelessWidget {
                                               (weight == FontWeight.w600)
                                           ? 1
                                           : 0,
-                                      child: Text(
-                                        labels[index],
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          height: 18 / 13,
-                                          fontWeight: weight,
-                                          color: ink,
-                                        ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (icons != null) ...[
+                                            SegmentIcon(
+                                              icons![index],
+                                              color: ink,
+                                              bold: weight == FontWeight.w600,
+                                            ),
+                                            const SizedBox(width: 4),
+                                          ],
+                                          Text(
+                                            labels[index],
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              height: 18 / 13,
+                                              fontWeight: weight,
+                                              color: ink,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                 ],
@@ -338,8 +362,11 @@ class GelButton extends StatelessWidget {
     this.foreground = const Color(0xFFFFFFFF),
     this.height = 48,
     this.expand = true,
+    this.icon,
   });
 
+  /// Optional leading icon widget.
+  final Widget? icon;
   final String label;
   final VoidCallback? onPressed;
   final Color color;
@@ -383,14 +410,24 @@ class GelButton extends StatelessWidget {
                   ]
                 : null,
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              height: 22 / 16,
-              fontWeight: FontWeight.w600,
-              color: foreground,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[icon!, const SizedBox(width: 8)],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 22 / 16,
+                    fontWeight: FontWeight.w600,
+                    color: foreground,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

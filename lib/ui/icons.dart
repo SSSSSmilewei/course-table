@@ -81,6 +81,26 @@ class AppIcons {
       '<path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/>';
   static const book =
       '<path d="M12 7.6c-2.2-1.6-5.2-1.9-8-1.1v12.2c2.8-.8 5.8-.5 8 1.1 2.2-1.6 5.2-1.9 8-1.1V6.5c-2.8-.8-5.8-.5-8 1.1zM12 7.6v12.2"/>';
+  static const pen =
+      '<path d="M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>';
+  static const play = '<path d="M7 5.5v13l11-6.5z"/>';
+  static const hourglass =
+      '<path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 4 4.5 5.5 4.5 8.5s-4.5 4.5-4.5 8.5M16.5 3.5c0 4-4.5 5.5-4.5 8.5s4.5 4.5 4.5 8.5"/>';
+  static const sparkles =
+      '<path d="M10 3.5 11.6 8.4 16.5 10 11.6 11.6 10 16.5 8.4 11.6 3.5 10 8.4 8.4z"/><path d="m18 14 .8 2.2 2.2.8-2.2.8L18 20l-.8-2.2-2.2-.8 2.2-.8z" fill="currentColor" stroke="none"/>';
+  static const inbox =
+      '<path d="M3.5 13.5 6 5.5h12l2.5 8v5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/>';
+  static const sunrise =
+      '<path d="M5 17.5a7 7 0 0 1 14 0M3 20.5h18M12 3.5v4M9.5 6 12 3.5 14.5 6M4.6 10.6l1.4 1.4M18 12l1.4-1.4"/>';
+  static const graduation =
+      '<path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11v4.5c1.5 1.5 3.5 2.2 5.5 2.2s4-.7 5.5-2.2V11M21.5 9v5.5"/>';
+  static const timetable =
+      '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M3.5 9h17M9 9v11.5"/><path d="M12.5 13h4.5M12.5 16.5h3"/>';
+  static const share =
+      '<path d="M12 15V3.5M8 7.5l4-4 4 4"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/>';
+  static const dashedPlus = '<path d="M12 8v8M8 12h8"/>';
+  static const github =
+      '<path d="M9 19c-4.5 1.4-4.5-2.4-6.3-2.9M15 21.5v-3.6c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.7 4.7 0 0 0-1.3-3.3 4.3 4.3 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 3.1 5.4 3.4 5.4 3.4a4.3 4.3 0 0 0-.1 3.2A4.7 4.7 0 0 0 4 9.9c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2v3.6"/>';
 }
 
 /// Renders one of [AppIcons] in [color] (defaults to the miuix content
@@ -152,4 +172,22 @@ class TileColors {
   static const pink = Color(0xFFE5487D);
   static const amber = Color(0xFFE59A16);
   static const slate = Color(0xFF6B7684);
+}
+
+/// Small icon for segmented controls; slightly heavier when selected.
+class SegmentIcon extends StatelessWidget {
+  const SegmentIcon(
+    this.svg, {
+    super.key,
+    required this.color,
+    this.bold = false,
+  });
+
+  final String svg;
+  final Color color;
+  final bool bold;
+
+  @override
+  Widget build(BuildContext context) =>
+      AppIcon(svg, size: 16, color: color, strokeWidth: bold ? 2.1 : 1.7);
 }

@@ -17,7 +17,9 @@ import 'icons.dart';
 import 'tokens.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required this.reselect});
+
+  final Reselect reselect;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -36,6 +38,7 @@ enum _Dialog {
 class _SettingsPageState extends State<SettingsPage>
     with WidgetsBindingObserver {
   final _island = IslandController();
+  final _scroll = ScrollController();
   final _prompt = TextEditingController();
   bool _islandEnabled = false;
   IslandCapability? _capability;
@@ -50,14 +53,26 @@ class _SettingsPageState extends State<SettingsPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.reselect.addListener(_toTop);
     _refreshIslandStatus();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    widget.reselect.removeListener(_toTop);
+    _scroll.dispose();
     _prompt.dispose();
     super.dispose();
+  }
+
+  void _toTop() {
+    if (!_scroll.hasClients) return;
+    _scroll.animateTo(
+      0,
+      duration: const Duration(milliseconds: 360),
+      curve: const Cubic(0.2, 0.8, 0.2, 1),
+    );
   }
 
   @override
@@ -191,6 +206,7 @@ class _SettingsPageState extends State<SettingsPage>
       content: (padding) => Stack(
         children: [
           ListView(
+            controller: _scroll,
             padding: EdgeInsets.only(
               top: padding.top,
               bottom: padding.bottom + 24,
@@ -737,11 +753,21 @@ class JournalPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (entry.morning.isNotEmpty) ...[
-                          Text(
-                            '晨间',
-                            style: TypeScale.chip.copyWith(
-                              color: palette.accentText,
-                            ),
+                          Row(
+                            children: [
+                              AppIcon(
+                                AppIcons.sunrise,
+                                size: 16,
+                                color: palette.accentText,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '晨间',
+                                style: TypeScale.chip.copyWith(
+                                  color: palette.accentText,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -753,11 +779,21 @@ class JournalPage extends StatelessWidget {
                             entry.evening.isNotEmpty)
                           const SizedBox(height: 12),
                         if (entry.evening.isNotEmpty) ...[
-                          Text(
-                            '晚间',
-                            style: TypeScale.chip.copyWith(
-                              color: palette.accentText,
-                            ),
+                          Row(
+                            children: [
+                              AppIcon(
+                                AppIcons.moon,
+                                size: 16,
+                                color: palette.accentText,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '晚间',
+                                style: TypeScale.chip.copyWith(
+                                  color: palette.accentText,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(

@@ -448,7 +448,7 @@ class _CourseBlock extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Whole lines only, so nothing is clipped mid-glyph. The course
-            // name comes first, then the room, then the inner 里 chip.
+            // name comes first, then the room, then the inner self-study chip.
             const titleLine = 15.0;
             const subLine = 14.0;
             final titleStyle = TypeScale.caption.copyWith(
@@ -457,14 +457,35 @@ class _CourseBlock extends StatelessWidget {
               color: ink,
               decoration: done ? TextDecoration.lineThrough : null,
             );
-            final shown = title;
-            final painter = TextPainter(
-              text: TextSpan(text: shown, style: titleStyle),
-              textDirection: TextDirection.ltr,
-              textScaler: MediaQuery.textScalerOf(context),
-            )..layout(maxWidth: constraints.maxWidth);
-            final needed = painter.computeLineMetrics().length;
-            painter.dispose();
+            int linesFor(String text) {
+              final painter = TextPainter(
+                text: TextSpan(text: text, style: titleStyle),
+                textDirection: TextDirection.ltr,
+                textScaler: MediaQuery.textScalerOf(context),
+              )..layout(maxWidth: constraints.maxWidth);
+              final lines = painter.computeLineMetrics().length;
+              painter.dispose();
+              return lines;
+            }
+
+            // A short suffix like the "A" in "高等数学 A" must not sit alone on
+            // its own line: if it would cost an extra line, it moves to the
+            // front of the room line instead ("A · @教 1-305").
+            var shown = title;
+            var sub = subtitle;
+            var needed = linesFor(title);
+            final suffix = RegExp(
+              r'^(.*\S)\s+([A-Za-zⅠⅡⅢⅣ])$',
+            ).firstMatch(title);
+            if (suffix != null && !dashed) {
+              final base = suffix[1]!;
+              final baseLines = linesFor(base);
+              if (baseLines < needed) {
+                shown = base;
+                needed = baseLines;
+                sub = sub == null ? suffix[2] : '${suffix[2]} · $sub';
+              }
+            }
             var room = constraints.maxHeight;
             final titleLines = math
                 .min(needed, (room / titleLine).floor())
@@ -472,7 +493,7 @@ class _CourseBlock extends StatelessWidget {
             room -= titleLines * titleLine;
             final showInner = inner != null && room >= 30;
             if (showInner) room -= 30;
-            final subLines = subtitle == null
+            final subLines = sub == null
                 ? 0
                 : ((room - 2) / subLine).floor().clamp(0, 2);
             final showSub = subLines > 0;
@@ -489,7 +510,7 @@ class _CourseBlock extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      subtitle!,
+                      sub!,
                       maxLines: subLines,
                       overflow: TextOverflow.ellipsis,
                       style: TypeScale.caption.copyWith(

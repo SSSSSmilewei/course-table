@@ -29,6 +29,7 @@ class _AppShellState extends State<AppShell> {
   final _backdrop = MiuixLayerBackdrop();
   int _tab = 0;
   final _weekPage = GlobalKey<WeekPageState>();
+  final _reselect = List.generate(4, (_) => Reselect());
 
   static const _tabs = [
     ('今天', AppIcons.today),
@@ -50,6 +51,9 @@ class _AppShellState extends State<AppShell> {
   @override
   void dispose() {
     _backdrop.dispose();
+    for (final notifier in _reselect) {
+      notifier.dispose();
+    }
     super.dispose();
   }
 
@@ -73,10 +77,13 @@ class _AppShellState extends State<AppShell> {
     final palette = Palette(context);
     final background = state.appearance.backgroundPath;
     final pages = [
-      TodayPage(onOpenWeek: () => setState(() => _tab = 1)),
-      WeekPage(key: _weekPage),
-      const PlanPage(),
-      const SettingsPage(),
+      TodayPage(
+        onOpenWeek: () => setState(() => _tab = 1),
+        reselect: _reselect[0],
+      ),
+      WeekPage(key: _weekPage, reselect: _reselect[1]),
+      PlanPage(reselect: _reselect[2]),
+      SettingsPage(reselect: _reselect[3]),
     ];
     return Material(
       type: MaterialType.transparency,
@@ -91,7 +98,10 @@ class _AppShellState extends State<AppShell> {
               backdrop: _backdrop,
               selectedIndex: _tab,
               onSelect: (index) {
-                if (index == _tab) return;
+                if (index == _tab) {
+                  _reselect[index].fire();
+                  return;
+                }
                 HapticFeedback.selectionClick();
                 setState(() => _tab = index);
               },

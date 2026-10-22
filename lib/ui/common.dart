@@ -7,6 +7,12 @@ import 'glass.dart';
 import 'icons.dart';
 import 'tokens.dart';
 
+/// Fires when the user taps the tab that is already selected; pages use it
+/// to scroll back to the top or return to the current week.
+class Reselect extends ChangeNotifier {
+  void fire() => notifyListeners();
+}
+
 /// Messages shown at the bottom of the app.
 final appSnackbar = MiuixSnackbarHostState();
 
@@ -72,8 +78,10 @@ class PageCard extends StatelessWidget {
 
 /// Section label above a card, aligned with the card's content.
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key, this.trailing});
+  const SectionLabel(this.text, {super.key, this.trailing, this.icon});
 
+  /// Optional leading icon, one of AppIcons.
+  final String? icon;
   final String text;
   final Widget? trailing;
 
@@ -84,6 +92,10 @@ class SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(28, 16, 24, 8),
       child: Row(
         children: [
+          if (icon != null) ...[
+            AppIcon(icon!, size: 16, color: palette.secondary),
+            const SizedBox(width: 6),
+          ],
           Expanded(
             child: Text(
               text,
@@ -394,11 +406,15 @@ class PrimaryButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.expand = true,
+    this.icon,
   });
 
   final String text;
   final VoidCallback? onPressed;
   final bool expand;
+
+  /// Optional leading icon, one of AppIcons.
+  final String? icon;
 
   @override
   Widget build(BuildContext context) => GelButton(
@@ -406,6 +422,14 @@ class PrimaryButton extends StatelessWidget {
     onPressed: onPressed,
     expand: expand,
     color: Brand.hero,
+    icon: icon == null
+        ? null
+        : AppIcon(
+            icon!,
+            size: 19,
+            color: const Color(0xFFFFFFFF),
+            strokeWidth: 2,
+          ),
   );
 }
 
@@ -416,8 +440,11 @@ class SecondaryButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.expand = true,
+    this.icon,
   });
 
+  /// Optional leading icon, one of AppIcons.
+  final String? icon;
   final String text;
   final VoidCallback? onPressed;
   final bool expand;
@@ -437,12 +464,21 @@ class SecondaryButton extends StatelessWidget {
         child: SizedBox(
           height: 48,
           child: Center(
-            child: Text(
-              text,
-              style: TypeScale.listTitle.copyWith(
-                fontWeight: FontWeight.w600,
-                color: palette.ink,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  AppIcon(icon!, size: 19, color: palette.ink, strokeWidth: 2),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  text,
+                  style: TypeScale.listTitle.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: palette.ink,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

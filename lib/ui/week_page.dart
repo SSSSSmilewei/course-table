@@ -15,7 +15,9 @@ import 'tokens.dart';
 import 'week_grid.dart';
 
 class WeekPage extends StatefulWidget {
-  const WeekPage({super.key});
+  const WeekPage({super.key, required this.reselect});
+
+  final Reselect reselect;
 
   @override
   State<WeekPage> createState() => WeekPageState();
@@ -33,6 +35,7 @@ class WeekPageState extends State<WeekPage> {
   @override
   void initState() {
     super.initState();
+    widget.reselect.addListener(_toThisWeek);
     // The now line only needs minute precision.
     _clock = Timer.periodic(
       const Duration(seconds: 30),
@@ -40,8 +43,14 @@ class WeekPageState extends State<WeekPage> {
     );
   }
 
+  void _toThisWeek() {
+    final table = AppScope.read(context).timetable;
+    if (table != null) _animateTo(_currentWeek(table), table);
+  }
+
   @override
   void dispose() {
+    widget.reselect.removeListener(_toThisWeek);
     _clock?.cancel();
     _pages?.dispose();
     _sheet.dispose();
@@ -92,6 +101,7 @@ class WeekPageState extends State<WeekPage> {
                     const SizedBox(height: 16),
                     PrimaryButton(
                       text: '导入课表',
+                      icon: AppIcons.fileImport,
                       onPressed: () => importTimetable(context),
                     ),
                   ],
@@ -158,6 +168,11 @@ class WeekPageState extends State<WeekPage> {
                       Expanded(
                         child: GlassSegmented(
                           labels: layerLabels,
+                          icons: const [
+                            AppIcons.layers,
+                            AppIcons.week,
+                            AppIcons.study,
+                          ],
                           selected: _layer.index,
                           height: 44,
                           onChanged: (index) =>
