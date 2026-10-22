@@ -13,6 +13,7 @@ import 'package:course_table/models.dart';
 import 'package:course_table/plan.dart';
 import 'package:course_table/ui/reflection_page.dart';
 import 'package:course_table/ui/common.dart';
+import 'package:course_table/ui/schedule_page.dart';
 import 'package:course_table/ui/semester_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -222,6 +223,19 @@ void main() {
       before: () async {
         navigatorKey.currentState!.push(
           SlideRoute((_) => const SemesterPage()),
+        );
+      },
+    );
+  });
+
+  testWidgets('schedule', (tester) async {
+    await _shoot(
+      tester,
+      'schedule',
+      build: (state) => CourseTableApp(state: state),
+      before: () async {
+        navigatorKey.currentState!.push(
+          SlideRoute((_) => const SchedulePage()),
         );
       },
     );

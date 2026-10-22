@@ -52,7 +52,14 @@ class Timetable {
     required this.startDate,
     required this.totalWeeks,
     required this.courses,
+    this.periodStarts,
+    this.periodLength,
   });
+
+  /// Custom daily schedule (作息时间): start of each period in minutes since
+  /// midnight, and the length of one period. Null means the default.
+  final List<int>? periodStarts;
+  final int? periodLength;
 
   final String semester;
   final String className;
@@ -68,14 +75,24 @@ class Timetable {
     courses: (json['courses'] as List)
         .map((course) => Course.fromJson(course as Map<String, dynamic>))
         .toList(),
+    periodStarts: (json['periodStarts'] as List?)?.cast<int>(),
+    periodLength: json['periodLength'] as int?,
   );
 
-  Timetable copyWith({DateTime? startDate, int? totalWeeks}) => Timetable(
+  Timetable copyWith({
+    DateTime? startDate,
+    int? totalWeeks,
+    List<int>? periodStarts,
+    int? periodLength,
+    bool resetSchedule = false,
+  }) => Timetable(
     semester: semester,
     className: className,
     startDate: startDate ?? this.startDate,
     totalWeeks: totalWeeks ?? this.totalWeeks,
     courses: courses,
+    periodStarts: resetSchedule ? null : periodStarts ?? this.periodStarts,
+    periodLength: resetSchedule ? null : periodLength ?? this.periodLength,
   );
 
   /// Highest period any course uses, at least 10 so the grid keeps its shape.
@@ -96,6 +113,8 @@ class Timetable {
     'startDate': startDate?.toIso8601String().split('T').first ?? '',
     'totalWeeks': totalWeeks,
     'courses': courses.map((course) => course.toJson()).toList(),
+    'periodStarts': ?periodStarts,
+    'periodLength': ?periodLength,
   };
 
   List<Course> coursesForWeek(int week) =>

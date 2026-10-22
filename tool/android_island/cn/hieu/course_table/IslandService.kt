@@ -28,8 +28,9 @@ import java.util.Locale
  * The island itself is rendered by HyperOS from the notification extras (see
  * [FocusIsland]); this service only decides what the island should say.
  *
- * Mirrors lib/reminders.dart — keep PERIOD_STARTS / PERIOD_LENGTH_MINUTES in
- * sync with periodStartTimes / periodLengthMinutes.
+ * Mirrors lib/reminders.dart — keep DEFAULT_PERIOD_STARTS /
+ * DEFAULT_PERIOD_LENGTH_MINUTES in sync with defaultPeriodStartTimes /
+ * defaultPeriodLengthMinutes.
  */
 class IslandService : Service() {
     companion object {
@@ -40,11 +41,13 @@ class IslandService : Service() {
         private const val PREFS_FILE = "FlutterSharedPreferences"
         private const val KEY_TIMETABLE = "flutter.timetable"
 
-        // Minutes since midnight; mirrors periodStartTimes in reminders.dart.
-        private val PERIOD_STARTS = intArrayOf(
+        // Minutes since midnight; mirrors defaultPeriodStartTimes in
+        // reminders.dart. A timetable may override both via its optional
+        // "periodStarts" / "periodLength" fields (作息时间 setting).
+        private val DEFAULT_PERIOD_STARTS = intArrayOf(
             480, 535, 600, 655, 840, 895, 960, 1015, 1140, 1195, 1260, 1315,
         )
-        private const val PERIOD_LENGTH_MINUTES = 45
+        private const val DEFAULT_PERIOD_LENGTH_MINUTES = 45
     }
 
     private data class Course(
@@ -60,6 +63,8 @@ class IslandService : Service() {
         val startDateMillis: Long?, // start-of-day millis of teaching week 1
         val totalWeeks: Int,
         val courses: List<Course>,
+        val periodStarts: IntArray = DEFAULT_PERIOD_STARTS,
+        val periodLength: Int = DEFAULT_PERIOD_LENGTH_MINUTES,
     )
 
     private sealed class IslandState {
@@ -191,7 +196,14 @@ class IslandService : Service() {
                     ),
                 )
             }
-            Timetable(startDate, root.getInt("totalWeeks"), parsed)
+            val startsJson = root.optJSONArray("periodStarts")
+            val starts = if (startsJson != null && startsJson.length() > 0) {
+                IntArray(startsJson.length()) { startsJson.getInt(it) }
+            } else {
+                DEFAULT_PERIOD_STARTS
+            }
+            val length = root.optInt("periodLength", DEFAULT_PERIOD_LENGTH_MINUTES)
+            Timetable(startDate, root.getInt("totalWeeks"), parsed, starts, length)
         } catch (error: Exception) {
             Log.e(TAG, "failed to parse timetable", error)
             null
@@ -218,7 +230,12 @@ class IslandService : Service() {
         val week = weekFor(now, table)
         val weekday = dartWeekday(now)
         return table.courses
-            .filter { it.weekday == weekday && it.weeks.contains(week) }
+            .filter {
+                it.weekday == weekday &&
+                    it.weeks.contains(week) &&
+                    it.startPeriod >= 1 &&
+                    it.endPeriod <= table.periodStarts.size
+            }
             .sortedBy { it.startPeriod }
     }
 
@@ -228,17 +245,17 @@ class IslandService : Service() {
         val courses = coursesForToday(now, table)
 
         for (course in courses) {
-            val start = PERIOD_STARTS[course.startPeriod - 1]
-            val end = PERIOD_STARTS[course.endPeriod - 1] + PERIOD_LENGTH_MINUTES
+            val start = table.periodStarts[course.startPeriod - 1]
+            val end = table.periodStarts[course.endPeriod - 1] + table.periodLength
             if (nowMinutes >= start && nowMinutes < end) {
                 val secondsLeft = (end - nowMinutes) * 60L - now.get(Calendar.SECOND)
                 val minutesLeft = ((secondsLeft + 59) / 60).toInt().coerceIn(0, 9999)
                 return IslandState.InClass(course, minutesLeft)
             }
         }
-        val next = courses.firstOrNull { PERIOD_STARTS[it.startPeriod - 1] > nowMinutes }
+        val next = courses.firstOrNull { table.periodStarts[it.startPeriod - 1] > nowMinutes }
             ?: return null
-        val startMinutes = PERIOD_STARTS[next.startPeriod - 1]
+        val startMinutes = table.periodStarts[next.startPeriod - 1]
         val secondsLeft =
             (startMinutes - nowMinutes) * 60L - now.get(Calendar.SECOND)
         return IslandState.UpNext(next, secondsLeft)

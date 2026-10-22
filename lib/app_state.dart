@@ -8,6 +8,7 @@ import 'island_controller.dart';
 import 'models.dart';
 import 'notification_service.dart';
 import 'plan.dart';
+import 'reminders.dart';
 import 'storage.dart';
 import 'xls_parser.dart';
 
@@ -34,6 +35,7 @@ class AppState extends ChangeNotifier {
   Future<void> load() async {
     appearance = await _storage.loadAppearance();
     timetable = await _storage.load();
+    applySchedule(timetable);
     reminderMinutes = await _storage.loadReminderMinutes();
     events = await _storage.loadCustomEvents();
     plans = await _storage.loadPlanItems();
@@ -51,8 +53,16 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> importXls(Uint8List bytes) async {
-    final parsed = XlsParser().parse(bytes);
+    // A re-import keeps the user's own schedule (作息时间).
+    final previous = timetable;
+    final parsed = XlsParser()
+        .parse(bytes)
+        .copyWith(
+          periodStarts: previous?.periodStarts,
+          periodLength: previous?.periodLength,
+        );
     timetable = parsed;
+    applySchedule(parsed);
     notifyListeners();
     await _storage.save(parsed);
     await _notifications.requestPermission();
@@ -64,6 +74,20 @@ class AppState extends ChangeNotifier {
     final current = timetable;
     if (current == null) return;
     timetable = current.copyWith(startDate: startDate, totalWeeks: totalWeeks);
+    notifyListeners();
+    await _storage.save(timetable!);
+    await _notifications.schedule(timetable!, reminderMinutes);
+    unawaited(IslandController().refresh());
+  }
+
+  /// Saves a custom daily schedule; null [starts] restores the default.
+  Future<void> updateSchedule(List<int>? starts, int? length) async {
+    final current = timetable;
+    if (current == null) return;
+    timetable = starts == null
+        ? current.copyWith(resetSchedule: true)
+        : current.copyWith(periodStarts: starts, periodLength: length);
+    applySchedule(timetable);
     notifyListeners();
     await _storage.save(timetable!);
     await _notifications.schedule(timetable!, reminderMinutes);

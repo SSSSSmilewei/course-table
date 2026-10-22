@@ -10,10 +10,12 @@ import '../appearance.dart';
 import '../island_controller.dart';
 import '../notification_service.dart';
 import '../plan.dart';
+import '../reminders.dart';
 import '../platform_capabilities.dart';
 import 'actions.dart';
 import 'common.dart';
 import 'icons.dart';
+import 'schedule_page.dart';
 import 'tokens.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -256,6 +258,24 @@ class _SettingsPageState extends State<SettingsPage>
                             _pickedDate = table.startDate ?? DateTime.now();
                             _dialog = _Dialog.startDate;
                           }),
+                        ),
+                      ),
+                      MergeSemantics(
+                        child: MiuixArrowPreference(
+                          title: '作息时间',
+                          summary:
+                              '${periodStartTimes.length} 节 · 每节 $periodLengthMinutes 分钟'
+                              '${table.periodStarts == null ? '' : ' · 已自定义'}',
+                          startAction: const Padding(
+                            padding: EdgeInsets.only(right: 14),
+                            child: IconTile(
+                              AppIcons.clock,
+                              color: TileColors.orange,
+                            ),
+                          ),
+                          onClick: () => Navigator.of(
+                            context,
+                          ).push(SlideRoute((_) => const SchedulePage())),
                         ),
                       ),
                       MergeSemantics(

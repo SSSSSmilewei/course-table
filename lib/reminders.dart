@@ -1,7 +1,7 @@
 import 'custom_event.dart';
 import 'models.dart';
 
-const periodStartTimes = [
+const defaultPeriodStartTimes = [
   (8, 0),
   (8, 55),
   (10, 0),
@@ -16,10 +16,24 @@ const periodStartTimes = [
   (21, 55),
 ];
 
-/// Every period lasts 45 minutes; gaps between consecutive start times are
-/// all at least 50 minutes, so end-of-period = start + 45min holds for the
-/// whole table. Kotlin side mirrors this constant — keep them in sync.
-const periodLengthMinutes = 45;
+/// Every period lasts 45 minutes by default. The Kotlin island service
+/// mirrors both defaults — keep them in sync.
+const defaultPeriodLengthMinutes = 45;
+
+/// The active daily schedule (作息时间). Defaults until [applySchedule]
+/// installs a timetable's own times.
+List<(int, int)> periodStartTimes = defaultPeriodStartTimes;
+int periodLengthMinutes = defaultPeriodLengthMinutes;
+
+/// Installs [timetable]'s custom schedule, or the default when it has none.
+void applySchedule(Timetable? timetable) {
+  final starts = timetable?.periodStarts;
+  periodStartTimes =
+      starts == null || starts.length != defaultPeriodStartTimes.length
+      ? defaultPeriodStartTimes
+      : [for (final minutes in starts) (minutes ~/ 60, minutes % 60)];
+  periodLengthMinutes = timetable?.periodLength ?? defaultPeriodLengthMinutes;
+}
 
 DateTime courseEnd(DateTime date, Course course) {
   final time = periodStartTimes[course.endPeriod - 1];
@@ -29,7 +43,7 @@ DateTime courseEnd(DateTime date, Course course) {
     date.day,
     time.$1,
     time.$2,
-  ).add(const Duration(minutes: periodLengthMinutes));
+  ).add(Duration(minutes: periodLengthMinutes));
 }
 
 /// The course currently in progress (start inclusive, end exclusive).

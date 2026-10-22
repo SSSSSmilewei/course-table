@@ -456,29 +456,39 @@ class SecondaryButton extends StatelessWidget {
       onPressed: onPressed,
       feedbackType: MiuixPressFeedbackType.sink,
       shape: MiuixSquircleBorder(cornerRadius: 18),
-      child: GlassSurface(
-        kind: GlassKind.clear,
-        radius: 18,
-        shadow: false,
-        tint: palette.dark ? const Color(0x1FFFFFFF) : const Color(0x0F1A1A1A),
-        child: SizedBox(
-          height: 48,
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  AppIcon(icon!, size: 19, color: palette.ink, strokeWidth: 2),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  text,
-                  style: TypeScale.listTitle.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: palette.ink,
+      child: Opacity(
+        opacity: onPressed == null ? 0.45 : 1,
+        child: GlassSurface(
+          kind: GlassKind.clear,
+          radius: 18,
+          shadow: false,
+          tint: palette.dark
+              ? const Color(0x1FFFFFFF)
+              : const Color(0x0F1A1A1A),
+          child: SizedBox(
+            height: 48,
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    AppIcon(
+                      icon!,
+                      size: 19,
+                      color: palette.ink,
+                      strokeWidth: 2,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    text,
+                    style: TypeScale.listTitle.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: palette.ink,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
