@@ -36,11 +36,17 @@ void main() {
     final start = timetable.startDate!;
     expect(timetable.rawWeekFor(start.subtract(const Duration(days: 3))), 0);
     for (var offset = -14; offset < 0; offset++) {
-      expect(timetable.coursesForDate(start.add(Duration(days: offset))), isEmpty);
+      expect(
+        timetable.coursesForDate(start.add(Duration(days: offset))),
+        isEmpty,
+      );
     }
     final afterEnd = start.add(Duration(days: timetable.totalWeeks * 7));
     for (var offset = 0; offset < 14; offset++) {
-      expect(timetable.coursesForDate(afterEnd.add(Duration(days: offset))), isEmpty);
+      expect(
+        timetable.coursesForDate(afterEnd.add(Duration(days: offset))),
+        isEmpty,
+      );
     }
   });
 
@@ -58,7 +64,10 @@ void main() {
     final next = nextCourse(timetable, DateTime(2026, 3, 4, 7, 30));
     expect(next?.course, course);
     expect(next?.start, DateTime(2026, 3, 4, 8));
-    expect(countdownText(const Duration(hours: 1, minutes: 2, seconds: 3)), '01:02:03');
+    expect(
+      countdownText(const Duration(hours: 1, minutes: 2, seconds: 3)),
+      '01:02:03',
+    );
   });
 
   test('builds future course occurrences in chronological order', () {

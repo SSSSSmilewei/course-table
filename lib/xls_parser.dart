@@ -13,16 +13,17 @@ typedef _FreeNative = Void Function(Pointer<Utf8>);
 typedef _FreeDart = void Function(Pointer<Utf8>);
 
 class XlsParser {
-  XlsParser({DynamicLibrary? library})
-      : _library = library ?? _openLibrary();
+  XlsParser({DynamicLibrary? library}) : _library = library ?? _openLibrary();
 
   final DynamicLibrary _library;
 
   Timetable parse(Uint8List bytes) {
-    final parse = _library
-        .lookupFunction<_ParseNative, _ParseDart>('parse_timetable_xls');
-    final free = _library
-        .lookupFunction<_FreeNative, _FreeDart>('free_parser_string');
+    final parse = _library.lookupFunction<_ParseNative, _ParseDart>(
+      'parse_timetable_xls',
+    );
+    final free = _library.lookupFunction<_FreeNative, _FreeDart>(
+      'free_parser_string',
+    );
     final input = calloc<Uint8>(bytes.length);
     input.asTypedList(bytes.length).setAll(0, bytes);
     final output = parse(input, bytes.length);
@@ -48,4 +49,3 @@ class XlsParser {
     return DynamicLibrary.open('libcourse_table_parser.so');
   }
 }
-

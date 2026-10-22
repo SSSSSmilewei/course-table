@@ -30,15 +30,15 @@ void main() {
   );
 
   CustomEvent eventAt(int startMinutes) => CustomEvent(
-        id: 'e1',
-        title: '班会',
-        location: '教学楼101',
-        date: DateTime(2026, 3, 4),
-        startMinutes: startMinutes,
-        endMinutes: startMinutes + 45,
-        weekly: false,
-        reminderMinutes: 10,
-      );
+    id: 'e1',
+    title: '班会',
+    location: '教学楼101',
+    date: DateTime(2026, 3, 4),
+    startMinutes: startMinutes,
+    endMinutes: startMinutes + 45,
+    weekly: false,
+    reminderMinutes: 10,
+  );
 
   test('returns the next course when there are no events', () {
     final up = nextUp(timetable, const [], DateTime(2026, 3, 4, 7, 30));
@@ -48,40 +48,32 @@ void main() {
   });
 
   test('an event starting before the course wins', () {
-    final up = nextUp(
-      timetable,
-      [eventAt(7 * 60 + 45)],
-      DateTime(2026, 3, 4, 7, 30),
-    );
+    final up = nextUp(timetable, [
+      eventAt(7 * 60 + 45),
+    ], DateTime(2026, 3, 4, 7, 30));
     expect(up?.title, '班会');
     expect(up?.location, '教学楼101');
     expect(up?.start, DateTime(2026, 3, 4, 7, 45));
   });
 
   test('the course wins when it starts before the event', () {
-    final up = nextUp(
-      timetable,
-      [eventAt(9 * 60)],
-      DateTime(2026, 3, 4, 7, 30),
-    );
+    final up = nextUp(timetable, [
+      eventAt(9 * 60),
+    ], DateTime(2026, 3, 4, 7, 30));
     expect(up?.title, '离散数学');
   });
 
   test('the course wins when course and event start at the same time', () {
-    final up = nextUp(
-      timetable,
-      [eventAt(8 * 60)],
-      DateTime(2026, 3, 4, 7, 30),
-    );
+    final up = nextUp(timetable, [
+      eventAt(8 * 60),
+    ], DateTime(2026, 3, 4, 7, 30));
     expect(up?.title, '离散数学');
   });
 
   test('returns an event when the timetable has no courses', () {
-    final up = nextUp(
-      emptyTimetable,
-      [eventAt(9 * 60)],
-      DateTime(2026, 3, 4, 8, 30),
-    );
+    final up = nextUp(emptyTimetable, [
+      eventAt(9 * 60),
+    ], DateTime(2026, 3, 4, 8, 30));
     expect(up?.title, '班会');
   });
 

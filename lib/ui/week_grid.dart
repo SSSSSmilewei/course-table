@@ -7,12 +7,14 @@ import '../custom_event.dart';
 import '../models.dart';
 import '../plan.dart';
 import '../reminders.dart';
+import 'glass.dart';
+import 'icons.dart';
 import 'tokens.dart';
 
 /// Which layers of the timetable are visible.
 enum Layer { both, biao, li }
 
-const layerLabels = ['表 + 里', '只看表', '只看里'];
+const layerLabels = ['课表 + 自学', '只看课表', '只看自学'];
 
 /// Weekdays (1 = Monday) that get a column: weekends only when something
 /// ever happens on them.
@@ -54,22 +56,26 @@ class WeekGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final days = visibleWeekdays(timetable, plans);
-      final periods = timetable.periodCount;
-      final available = constraints.maxHeight - _header;
-      final rowHeight = math.max(_minRow, available / periods);
-      final columnWidth = (constraints.maxWidth - _timeColumn) / days.length;
-      final height = _header + rowHeight * periods;
-      final grid = SizedBox(
-        width: constraints.maxWidth,
-        height: height,
-        child: Stack(children: _cells(context, days, periods, rowHeight, columnWidth)),
-      );
-      return height <= constraints.maxHeight + 0.5
-          ? grid
-          : SingleChildScrollView(child: grid);
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final days = visibleWeekdays(timetable, plans);
+        final periods = timetable.periodCount;
+        final available = constraints.maxHeight - _header;
+        final rowHeight = math.max(_minRow, available / periods);
+        final columnWidth = (constraints.maxWidth - _timeColumn) / days.length;
+        final height = _header + rowHeight * periods;
+        final grid = SizedBox(
+          width: constraints.maxWidth,
+          height: height,
+          child: Stack(
+            children: _cells(context, days, periods, rowHeight, columnWidth),
+          ),
+        );
+        return height <= constraints.maxHeight + 0.5
+            ? grid
+            : SingleChildScrollView(child: grid);
+      },
+    );
   }
 
   List<Widget> _cells(
@@ -81,7 +87,8 @@ class WeekGrid extends StatelessWidget {
   ) {
     final palette = Palette(context);
     final today = dateOnly(now);
-    double left(int weekday) => _timeColumn + days.indexOf(weekday) * columnWidth;
+    double left(int weekday) =>
+        _timeColumn + days.indexOf(weekday) * columnWidth;
     double top(int period) => _header + (period - 1) * rowHeight;
     final children = <Widget>[];
 
@@ -89,58 +96,81 @@ class WeekGrid extends StatelessWidget {
     for (final weekday in days) {
       final date = timetable.dateFor(week, weekday);
       final isToday = date != null && sameDate(date, today);
-      children.add(Positioned(
-        left: left(weekday) + _gap / 2,
-        top: 2,
-        width: columnWidth - _gap,
-        height: _header - 6,
-        child: Container(
-          decoration: ShapeDecoration(
-            color: isToday ? Brand.hero : const Color(0x00000000),
-            shape: MiuixSquircleBorder(cornerRadius: 10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(weekdayNames[weekday - 1],
+      children.add(
+        Positioned(
+          left: left(weekday) + _gap / 2,
+          top: 2,
+          width: columnWidth - _gap,
+          height: _header - 6,
+          child: Container(
+            decoration: ShapeDecoration(
+              color: isToday ? Brand.hero : const Color(0x00000000),
+              shape: MiuixSquircleBorder(cornerRadius: 10),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  weekdayNames[weekday - 1],
                   style: TypeScale.caption.copyWith(
-                      color: isToday ? const Color(0xFFFFFFFF) : palette.ink)),
-              if (date != null)
-                Text('${date.month}/${date.day}',
+                    color: isToday ? const Color(0xFFFFFFFF) : palette.ink,
+                  ),
+                ),
+                if (date != null)
+                  Text(
+                    '${date.month}/${date.day}',
                     style: TypeScale.caption.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: isToday ? const Color(0xFFFFFFFF) : palette.secondary)),
-            ],
+                      fontWeight: FontWeight.w400,
+                      color: isToday
+                          ? const Color(0xFFFFFFFF)
+                          : palette.secondary,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-      ));
+      );
     }
 
     // Period labels.
     for (var period = 1; period <= periods; period++) {
       final start = periodStartTimes[period - 1];
-      children.add(Positioned(
-        left: 0,
-        top: top(period),
-        width: _timeColumn,
-        height: rowHeight,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('$period', style: TypeScale.caption.copyWith(color: palette.ink)),
-            if (rowHeight >= 44)
-              Text('${start.$1}:${start.$2.toString().padLeft(2, '0')}',
+      children.add(
+        Positioned(
+          left: 0,
+          top: top(period),
+          width: _timeColumn,
+          height: rowHeight,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$period',
+                style: TypeScale.caption.copyWith(color: palette.ink),
+              ),
+              if (rowHeight >= 44)
+                Text(
+                  '${start.$1}:${start.$2.toString().padLeft(2, '0')}',
                   style: TypeScale.caption.copyWith(
-                      fontSize: 11, fontWeight: FontWeight.w400, color: palette.secondary)),
-          ],
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: palette.secondary,
+                  ),
+                ),
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     // Courses of this week, with overlapping ones split into lanes.
     final weekCourses = timetable
         .coursesForWeek(week)
-        .where((course) => days.contains(course.weekday) && course.endPeriod <= periods)
+        .where(
+          (course) =>
+              days.contains(course.weekday) && course.endPeriod <= periods,
+        )
         .toList();
     final weekPlans = <PlanItem>[];
     for (final weekday in days) {
@@ -183,18 +213,22 @@ class WeekGrid extends StatelessWidget {
           if (weekCourses.any(overlaps) || placed.any(overlaps)) continue;
           placed.add(course);
           final date = timetable.dateFor(week, course.weekday);
-          children.add(block(
-            weekday: course.weekday,
-            start: course.startPeriod,
-            end: course.endPeriod,
-            child: _CourseBlock(
-              title: course.name,
-              subtitle: '非本周',
-              fill: palette.ghostFill,
-              ink: palette.ghostInk,
-              onTap: date == null ? null : () => onCourseTap?.call(course, date),
+          children.add(
+            block(
+              weekday: course.weekday,
+              start: course.startPeriod,
+              end: course.endPeriod,
+              child: _CourseBlock(
+                title: course.name,
+                subtitle: '非本周',
+                fill: palette.ghostFill,
+                ink: palette.ghostInk,
+                onTap: date == null
+                    ? null
+                    : () => onCourseTap?.call(course, date),
+              ),
             ),
-          ));
+          );
         }
       }
 
@@ -212,48 +246,58 @@ class WeekGrid extends StatelessWidget {
             }
           }
         }
-        children.add(block(
-          weekday: course.weekday,
-          start: course.startPeriod,
-          end: course.endPeriod,
-          lane: lane,
-          lanes: lanes,
-          child: _CourseBlock(
-            title: course.name,
-            subtitle: course.room.isEmpty ? null : '@${course.room}',
-            fill: fill,
-            ink: ink,
-            inner: inner?.title,
-            innerDone: inner?.done ?? false,
-            onTap: date == null ? null : () => onCourseTap?.call(course, date),
+        children.add(
+          block(
+            weekday: course.weekday,
+            start: course.startPeriod,
+            end: course.endPeriod,
+            lane: lane,
+            lanes: lanes,
+            child: _CourseBlock(
+              title: course.name,
+              subtitle: course.room.isEmpty ? null : '@${course.room}',
+              fill: fill,
+              ink: ink,
+              inner: inner?.title,
+              innerDone: inner?.done ?? false,
+              onTap: date == null
+                  ? null
+                  : () => onCourseTap?.call(course, date),
+            ),
           ),
-        ));
+        );
       }
     }
 
     // 里课: on their own when only 里 is shown, or in free slots otherwise.
     if (layer != Layer.biao) {
       for (final plan in weekPlans) {
-        if (plan.endPeriod! > periods || !days.contains(plan.date!.weekday)) continue;
-        final under = weekCourses.where((course) =>
-            course.weekday == plan.date!.weekday &&
-            course.startPeriod <= plan.endPeriod! &&
-            course.endPeriod >= plan.startPeriod!);
+        if (plan.endPeriod! > periods || !days.contains(plan.date!.weekday)) {
+          continue;
+        }
+        final under = weekCourses.where(
+          (course) =>
+              course.weekday == plan.date!.weekday &&
+              course.startPeriod <= plan.endPeriod! &&
+              course.endPeriod >= plan.startPeriod!,
+        );
         if (layer == Layer.both && under.isNotEmpty) continue;
-        children.add(block(
-          weekday: plan.date!.weekday,
-          start: plan.startPeriod!,
-          end: plan.endPeriod!,
-          child: _CourseBlock(
-            title: plan.title,
-            subtitle: under.isEmpty ? '空课' : '原：${under.first.name}',
-            fill: Brand.planFill(palette.dark),
-            ink: Brand.planInk(palette.dark),
-            dashed: under.isEmpty,
-            done: plan.done,
-            onTap: () => onPlanTap?.call(plan),
+        children.add(
+          block(
+            weekday: plan.date!.weekday,
+            start: plan.startPeriod!,
+            end: plan.endPeriod!,
+            child: _CourseBlock(
+              title: plan.title,
+              subtitle: under.isEmpty ? '空课' : '原：${under.first.name}',
+              fill: Brand.planFill(palette.dark),
+              ink: Brand.planInk(palette.dark),
+              dashed: under.isEmpty,
+              done: plan.done,
+              onTap: () => onPlanTap?.call(plan),
+            ),
           ),
-        ));
+        );
       }
     }
 
@@ -264,24 +308,29 @@ class WeekGrid extends StatelessWidget {
     });
     final y = _nowOffset(now, periods, rowHeight);
     if (todayColumn >= 0 && y != null) {
-      children.add(Positioned(
-        left: _timeColumn + todayColumn * columnWidth - 3,
-        top: _header + y - 3,
-        width: columnWidth + 3,
-        height: 6,
-        child: IgnorePointer(
-          child: Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(color: Brand.accent, shape: BoxShape.circle),
-              ),
-              Expanded(child: Container(height: 2, color: Brand.accent)),
-            ],
+      children.add(
+        Positioned(
+          left: _timeColumn + todayColumn * columnWidth - 3,
+          top: _header + y - 3,
+          width: columnWidth + 3,
+          height: 6,
+          child: IgnorePointer(
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Brand.accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(child: Container(height: 2, color: Brand.accent)),
+              ],
+            ),
           ),
         ),
-      ));
+      );
     }
     return children;
   }
@@ -333,12 +382,16 @@ class WeekGrid extends StatelessWidget {
   static double? _nowOffset(DateTime now, int periods, double rowHeight) {
     final minutes = now.hour * 60 + now.minute + now.second / 60;
     for (var index = 0; index < periods; index++) {
-      final start = periodStartTimes[index].$1 * 60 + periodStartTimes[index].$2;
+      final start =
+          periodStartTimes[index].$1 * 60 + periodStartTimes[index].$2;
       final next = index + 1 < periods
           ? periodStartTimes[index + 1].$1 * 60 + periodStartTimes[index + 1].$2
           : start + periodLengthMinutes;
       if (minutes >= start && minutes < next) {
-        final fraction = ((minutes - start) / periodLengthMinutes).clamp(0.0, 1.0);
+        final fraction = ((minutes - start) / periodLengthMinutes).clamp(
+          0.0,
+          1.0,
+        );
         return (index + fraction) * rowHeight;
       }
     }
@@ -372,85 +425,135 @@ class _CourseBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Palette(context);
-    return MiuixPressable(
+    return Tappable(
       onPressed: onTap,
       feedbackType: MiuixPressFeedbackType.sink,
       shape: MiuixSquircleBorder(cornerRadius: 8),
-      semanticLabel: [title, ?subtitle, if (inner != null) '里课 $inner'].join('，'),
+      semanticLabel: [
+        title,
+        ?subtitle,
+        if (inner != null) '自学 $inner',
+      ].join('，'),
       child: Container(
         decoration: ShapeDecoration(
           color: fill,
           shape: MiuixSquircleBorder(
             cornerRadius: 8,
-            side: dashed ? BorderSide(color: ink.withValues(alpha: 0.6), width: 1.2) : BorderSide.none,
+            side: dashed
+                ? BorderSide(color: ink.withValues(alpha: 0.6), width: 1.2)
+                : BorderSide.none,
           ),
         ),
         padding: const EdgeInsets.fromLTRB(4, 4, 3, 3),
-        child: LayoutBuilder(builder: (context, constraints) {
-          // Whole lines only, so nothing is clipped mid-glyph. The course
-          // name comes first, then the room, then the inner 里 chip.
-          const titleLine = 15.0;
-          const subLine = 14.0;
-          final titleStyle = TypeScale.caption.copyWith(
-            fontSize: 12,
-            height: titleLine / 12,
-            color: ink,
-            decoration: done ? TextDecoration.lineThrough : null,
-          );
-          final painter = TextPainter(
-            text: TextSpan(text: title, style: titleStyle),
-            textDirection: TextDirection.ltr,
-            textScaler: MediaQuery.textScalerOf(context),
-          )..layout(maxWidth: constraints.maxWidth);
-          final needed = painter.computeLineMetrics().length;
-          painter.dispose();
-          var room = constraints.maxHeight;
-          final titleLines = math.min(needed, (room / titleLine).floor()).clamp(1, 6);
-          room -= titleLines * titleLine;
-          final showInner = inner != null && room >= 30;
-          if (showInner) room -= 30;
-          final subLines = subtitle == null ? 0 : ((room - 2) / subLine).floor().clamp(0, 2);
-          final showSub = subLines > 0;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(title, maxLines: titleLines, overflow: TextOverflow.ellipsis, style: titleStyle),
-              if (showSub)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    subtitle!,
-                    maxLines: subLines,
-                    overflow: TextOverflow.ellipsis,
-                    style: TypeScale.caption.copyWith(fontWeight: FontWeight.w400, color: ink),
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Whole lines only, so nothing is clipped mid-glyph. The course
+            // name comes first, then the room, then the inner 里 chip.
+            const titleLine = 15.0;
+            const subLine = 14.0;
+            final titleStyle = TypeScale.caption.copyWith(
+              fontSize: 12,
+              height: titleLine / 12,
+              color: ink,
+              decoration: done ? TextDecoration.lineThrough : null,
+            );
+            final shown = title;
+            final painter = TextPainter(
+              text: TextSpan(text: shown, style: titleStyle),
+              textDirection: TextDirection.ltr,
+              textScaler: MediaQuery.textScalerOf(context),
+            )..layout(maxWidth: constraints.maxWidth);
+            final needed = painter.computeLineMetrics().length;
+            painter.dispose();
+            var room = constraints.maxHeight;
+            final titleLines = math
+                .min(needed, (room / titleLine).floor())
+                .clamp(1, 6);
+            room -= titleLines * titleLine;
+            final showInner = inner != null && room >= 30;
+            if (showInner) room -= 30;
+            final subLines = subtitle == null
+                ? 0
+                : ((room - 2) / subLine).floor().clamp(0, 2);
+            final showSub = subLines > 0;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  shown,
+                  maxLines: titleLines,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
                 ),
-              if (showInner) ...[
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                  decoration: ShapeDecoration(
-                    color: innerDone ? palette.ghostInk : Brand.hero,
-                    shape: MiuixSquircleBorder(cornerRadius: 5),
+                if (showSub)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      subtitle!,
+                      maxLines: subLines,
+                      overflow: TextOverflow.ellipsis,
+                      style: TypeScale.caption.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: ink,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    '里 $inner',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TypeScale.caption.copyWith(color: const Color(0xFFFFFFFF)),
+                if (showInner) ...[
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(3, 2, 3, 2),
+                    decoration: ShapeDecoration(
+                      // Finished study reads as done, not disabled.
+                      color: innerDone ? palette.tint : Brand.hero,
+                      shape: MiuixSquircleBorder(cornerRadius: 5),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1, right: 2),
+                          child: AppIcon(
+                            innerDone ? AppIcons.check : AppIcons.study,
+                            size: 12,
+                            strokeWidth: 2,
+                            color: innerDone
+                                ? palette.accentText
+                                : const Color(0xFFFFFFFF),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            inner!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TypeScale.caption.copyWith(
+                              color: innerDone
+                                  ? palette.accentText
+                                  : const Color(0xFFFFFFFF),
+                              decoration: innerDone
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ] else if (inner != null) ...[
-                const Spacer(),
-                Container(
-                  height: 4,
-                  width: 12,
-                  decoration: ShapeDecoration(color: Brand.hero, shape: MiuixSquircleBorder(cornerRadius: 2)),
-                ),
+                ] else if (inner != null) ...[
+                  const Spacer(),
+                  Container(
+                    height: 4,
+                    width: 12,
+                    decoration: ShapeDecoration(
+                      color: Brand.hero,
+                      shape: MiuixSquircleBorder(cornerRadius: 2),
+                    ),
+                  ),
+                ],
               ],
-            ],
-          );
-        }),
+            );
+          },
+        ),
       ),
     );
   }

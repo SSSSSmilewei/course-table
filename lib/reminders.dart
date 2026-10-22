@@ -23,8 +23,13 @@ const periodLengthMinutes = 45;
 
 DateTime courseEnd(DateTime date, Course course) {
   final time = periodStartTimes[course.endPeriod - 1];
-  return DateTime(date.year, date.month, date.day, time.$1, time.$2)
-      .add(const Duration(minutes: periodLengthMinutes));
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    time.$1,
+    time.$2,
+  ).add(const Duration(minutes: periodLengthMinutes));
 }
 
 /// The course currently in progress (start inclusive, end exclusive).
@@ -72,8 +77,11 @@ class IslandUpNext extends IslandState {
 IslandState? islandState(Timetable timetable, DateTime now) {
   final current = currentCourse(timetable, now);
   if (current != null) return IslandInClass(current);
-  final tomorrow = DateTime(now.year, now.month, now.day)
-      .add(const Duration(days: 1));
+  final tomorrow = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).add(const Duration(days: 1));
   final next = nextCourse(timetable, now);
   if (next != null && next.start.isBefore(tomorrow)) {
     return IslandUpNext(next);
@@ -82,10 +90,7 @@ IslandState? islandState(Timetable timetable, DateTime now) {
 }
 
 class CourseOccurrence {
-  const CourseOccurrence({
-    required this.course,
-    required this.start,
-  });
+  const CourseOccurrence({required this.course, required this.start});
 
   final Course course;
   final DateTime start;
@@ -111,10 +116,16 @@ DateTime courseStart(DateTime date, Course course) {
 
 CourseOccurrence? nextCourse(Timetable timetable, DateTime now) {
   for (var offset = 0; offset <= 140; offset++) {
-    final date = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
+    final date = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: offset));
     for (final course in timetable.coursesForDate(date)) {
       final start = courseStart(date, course);
-      if (start.isAfter(now)) return CourseOccurrence(course: course, start: start);
+      if (start.isAfter(now)) {
+        return CourseOccurrence(course: course, start: start);
+      }
     }
   }
   return null;
@@ -162,10 +173,16 @@ List<CourseOccurrence> futureCourses(
 }) {
   final result = <CourseOccurrence>[];
   for (var offset = 0; offset <= 140 && result.length < limit; offset++) {
-    final date = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
+    final date = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(Duration(days: offset));
     for (final course in timetable.coursesForDate(date)) {
       final start = courseStart(date, course);
-      if (start.isAfter(now)) result.add(CourseOccurrence(course: course, start: start));
+      if (start.isAfter(now)) {
+        result.add(CourseOccurrence(course: course, start: start));
+      }
       if (result.length == limit) break;
     }
   }
@@ -178,7 +195,8 @@ String countdownText(Duration duration) {
   final hours = (totalSeconds % 86400) ~/ 3600;
   final minutes = (totalSeconds % 3600) ~/ 60;
   final seconds = totalSeconds % 60;
-  final time = '${hours.toString().padLeft(2, '0')}:'
+  final time =
+      '${hours.toString().padLeft(2, '0')}:'
       '${minutes.toString().padLeft(2, '0')}:'
       '${seconds.toString().padLeft(2, '0')}';
   return days > 0 ? '$days天 $time' : time;

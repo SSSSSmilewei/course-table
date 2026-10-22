@@ -15,8 +15,8 @@ import 'xls_parser.dart';
 /// Pages listen to it and call its methods instead of touching storage.
 class AppState extends ChangeNotifier {
   AppState({TimetableStorage? storage, NotificationService? notifications})
-      : _storage = storage ?? TimetableStorage(),
-        _notifications = notifications ?? NotificationService();
+    : _storage = storage ?? TimetableStorage(),
+      _notifications = notifications ?? NotificationService();
 
   final TimetableStorage _storage;
   final NotificationService _notifications;
@@ -43,7 +43,9 @@ class AppState extends ChangeNotifier {
     loading = false;
     notifyListeners();
     await _notifications.initialize();
-    if (timetable != null) await _notifications.schedule(timetable!, reminderMinutes);
+    if (timetable != null) {
+      await _notifications.schedule(timetable!, reminderMinutes);
+    }
     await _notifications.scheduleCustomEvents(events);
     await _notifications.scheduleReflection(reflection);
   }
@@ -85,10 +87,10 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> upsertEvent(CustomEvent event) => saveEvents([
-        for (final item in events)
-          if (item.id != event.id) item,
-        event,
-      ]);
+    for (final item in events)
+      if (item.id != event.id) item,
+    event,
+  ]);
 
   Future<void> deleteEvent(String id) =>
       saveEvents(events.where((item) => item.id != id).toList());
@@ -100,10 +102,10 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> upsertPlan(PlanItem item) => savePlans([
-        for (final plan in plans)
-          if (plan.id != item.id) plan,
-        item,
-      ]);
+    for (final plan in plans)
+      if (plan.id != item.id) plan,
+    item,
+  ]);
 
   Future<void> deletePlan(String id) =>
       savePlans(plans.where((item) => item.id != id).toList());
@@ -114,7 +116,8 @@ class AppState extends ChangeNotifier {
     final next = <PlanItem>[];
     for (final plan in plans) {
       if (plan.id == item.id) continue;
-      final clashes = plan.scheduled &&
+      final clashes =
+          plan.scheduled &&
           sameDate(plan.date!, day) &&
           plan.startPeriod! <= end &&
           plan.endPeriod! >= start;
@@ -125,9 +128,9 @@ class AppState extends ChangeNotifier {
   }
 
   JournalEntry journalFor(DateTime day) => journal.firstWhere(
-        (entry) => sameDate(entry.date, day),
-        orElse: () => JournalEntry(date: dateOnly(day)),
-      );
+    (entry) => sameDate(entry.date, day),
+    orElse: () => JournalEntry(date: dateOnly(day)),
+  );
 
   Future<void> saveJournalEntry(JournalEntry entry) async {
     journal = [

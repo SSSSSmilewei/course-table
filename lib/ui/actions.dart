@@ -17,8 +17,10 @@ Future<void> importTimetable(BuildContext context) async {
   try {
     await state.importXls(bytes);
     final table = state.timetable!;
-    toast('已导入 ${table.courses.length} 门课'
-        '${table.startDate == null ? '，请在设置里填开学日期' : ''}');
+    toast(
+      '已导入 ${table.courses.length} 门课'
+      '${table.startDate == null ? '，请在设置里填开学日期' : ''}',
+    );
   } catch (error) {
     toast('导入失败：${error is FormatException ? error.message : error}');
   }

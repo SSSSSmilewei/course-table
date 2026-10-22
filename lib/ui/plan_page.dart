@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_miuix/miuix.dart';
 
@@ -7,6 +8,8 @@ import '../models.dart';
 import '../plan.dart';
 import 'actions.dart';
 import 'common.dart';
+import 'glass.dart';
+import 'icons.dart';
 import 'sheets.dart';
 import 'tokens.dart';
 import 'week_grid.dart';
@@ -36,8 +39,10 @@ class _PlanPageState extends State<PlanPage> {
     super.dispose();
   }
 
-  List<String> _groups(List<PlanItem> plans) =>
-      {for (final plan in plans) if (plan.group.isNotEmpty) plan.group}.toList()..sort();
+  List<String> _groups(List<PlanItem> plans) => {
+    for (final plan in plans)
+      if (plan.group.isNotEmpty) plan.group,
+  }.toList()..sort();
 
   void _openAdd() {
     _title.clear();
@@ -46,7 +51,11 @@ class _PlanPageState extends State<PlanPage> {
   }
 
   void _saveCards(AppState state) {
-    final lines = _title.text.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+    final lines = _title.text
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
     if (lines.isEmpty) return;
     final group = _group.text.trim();
     final stamp = DateTime.now().microsecondsSinceEpoch;
@@ -64,7 +73,12 @@ class _PlanPageState extends State<PlanPage> {
 
   /// Fills this week's open slots with backlog cards, preferring courses the
   /// user already studies through (their "水课"), then free daytime slots.
-  void _autoArrange(AppState state, Timetable table, int week, List<PlanItem> backlog) {
+  void _autoArrange(
+    AppState state,
+    Timetable table,
+    int week,
+    List<PlanItem> backlog,
+  ) {
     if (backlog.isEmpty) {
       toast('没有待排的卡片');
       return;
@@ -72,7 +86,8 @@ class _PlanPageState extends State<PlanPage> {
     final waterCourses = <String>{};
     for (final plan in state.plans.where((plan) => plan.scheduled)) {
       for (final course in table.coursesForDate(plan.date!)) {
-        if (course.startPeriod <= plan.endPeriod! && course.endPeriod >= plan.startPeriod!) {
+        if (course.startPeriod <= plan.endPeriod! &&
+            course.endPeriod >= plan.startPeriod!) {
           waterCourses.add(course.name);
         }
       }
@@ -84,18 +99,28 @@ class _PlanPageState extends State<PlanPage> {
       final date = table.dateFor(week, weekday);
       if (date == null || date.isBefore(today)) continue;
       for (var start = 1; start <= 7; start += 2) {
-        if (planAt(state.plans, date, start) != null || planAt(state.plans, date, start + 1) != null) continue;
-        final courses = table.coursesForDate(date).where(
-            (course) => course.startPeriod <= start + 1 && course.endPeriod >= start);
+        if (planAt(state.plans, date, start) != null ||
+            planAt(state.plans, date, start + 1) != null) {
+          continue;
+        }
+        final courses = table
+            .coursesForDate(date)
+            .where(
+              (course) =>
+                  course.startPeriod <= start + 1 && course.endPeriod >= start,
+            );
         if (courses.isEmpty) {
           free.add((date, start));
-        } else if (courses.every((course) => waterCourses.contains(course.name))) {
+        } else if (courses.every(
+          (course) => waterCourses.contains(course.name),
+        )) {
           water.add((date, start));
         }
       }
     }
     final slots = [...water, ...free];
     var placed = 0;
+    final before = state.plans;
     var plans = [...state.plans];
     for (final card in backlog) {
       if (placed >= slots.length) break;
@@ -105,8 +130,19 @@ class _PlanPageState extends State<PlanPage> {
           if (plan.id == card.id) plan.placed(date, start, start + 1) else plan,
       ];
     }
+    if (placed == 0) {
+      toast('这周没有空出来的格子了');
+      return;
+    }
     state.savePlans(plans);
-    toast(placed == 0 ? '这周没有空出来的格子了' : '已排进 $placed 张卡片');
+    HapticFeedback.mediumImpact();
+    appSnackbar.showSnackbar('已排进 $placed 张卡片', actionLabel: '撤销').then((
+      result,
+    ) {
+      if (result == MiuixSnackbarResult.actionPerformed) {
+        state.savePlans(before);
+      }
+    });
   }
 
   @override
@@ -119,26 +155,47 @@ class _PlanPageState extends State<PlanPage> {
         containerColor: const Color(0x00000000),
         content: (padding) => Padding(
           padding: padding,
-          child: Column(children: [
-            const PageHeader(title: '里课表'),
-            PageCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('先导入课表，再把自学内容排进每一节课里。',
-                    style: TypeScale.secondary.copyWith(color: palette.secondary)),
-                const SizedBox(height: 16),
-                PrimaryButton(text: '导入课表', onPressed: () => importTimetable(context)),
-              ]),
-            ),
-          ]),
+          child: Column(
+            children: [
+              const PageHeader(title: '自学'),
+              PageCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '先导入课表，再把自学内容排进每一节课里。',
+                      style: TypeScale.secondary.copyWith(
+                        color: palette.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    PrimaryButton(
+                      text: '导入课表',
+                      onPressed: () => importTimetable(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
-    final week = (_week ?? table.weekFor(DateTime.now())).clamp(1, table.totalWeeks);
+    final week = (_week ?? table.weekFor(DateTime.now())).clamp(
+      1,
+      table.totalWeeks,
+    );
     final groups = _groups(state.plans);
-    if (_groupFilter != null && !groups.contains(_groupFilter)) _groupFilter = null;
+    if (_groupFilter != null && !groups.contains(_groupFilter)) {
+      _groupFilter = null;
+    }
     final backlog = state.plans
-        .where((plan) => !plan.scheduled && (_groupFilter == null || plan.group == _groupFilter))
+        .where(
+          (plan) =>
+              !plan.scheduled &&
+              (_groupFilter == null || plan.group == _groupFilter),
+        )
         .toList();
     final weekPlans = state.plans.where((plan) {
       if (!plan.scheduled) return false;
@@ -154,21 +211,29 @@ class _PlanPageState extends State<PlanPage> {
             child: Column(
               children: [
                 PageHeader(
-                  title: '里课表',
-                  meta: '第 $week 周 · 本周 ${weekPlans.length} 节 · 完成 ${weekPlans.where((plan) => plan.done).length}',
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    RoundIconButton(
-                      icon: 'chevronBackward',
-                      label: '上一周',
-                      onPressed: week > 1 ? () => setState(() => _week = week - 1) : null,
-                    ),
-                    const SizedBox(width: 4),
-                    RoundIconButton(
-                      icon: 'chevronForward',
-                      label: '下一周',
-                      onPressed: week < table.totalWeeks ? () => setState(() => _week = week + 1) : null,
-                    ),
-                  ]),
+                  title: '自学',
+                  meta:
+                      '第 $week 周 · ${weekPlans.length} 个自学 · 已完成 ${weekPlans.where((plan) => plan.done).length}',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RoundIconButton(
+                        icon: AppIcons.chevronLeft,
+                        label: '上一周',
+                        onPressed: week > 1
+                            ? () => setState(() => _week = week - 1)
+                            : null,
+                      ),
+                      const SizedBox(width: 4),
+                      RoundIconButton(
+                        icon: AppIcons.chevronRight,
+                        label: '下一周',
+                        onPressed: week < table.totalWeeks
+                            ? () => setState(() => _week = week + 1)
+                            : null,
+                      ),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: Padding(
@@ -177,9 +242,12 @@ class _PlanPageState extends State<PlanPage> {
                       table: table,
                       week: week,
                       plans: state.plans,
-                      onDrop: (plan, date, start) => state.placePlan(plan, date, start, start + 1),
-                      onPlanTap: (plan) => _sheet.open(PlanSheetRequest(plan.id)),
-                      onCourseTap: (course, date) => _sheet.open(CourseSheetRequest(course, date)),
+                      onDrop: (plan, date, start) =>
+                          state.placePlan(plan, date, start, start + 1),
+                      onPlanTap: (plan) =>
+                          _sheet.open(PlanSheetRequest(plan.id)),
+                      onCourseTap: (course, date) =>
+                          _sheet.open(CourseSheetRequest(course, date)),
                     ),
                   ),
                 ),
@@ -199,14 +267,19 @@ class _PlanPageState extends State<PlanPage> {
           SheetLayer(controller: _sheet),
           MiuixOverlayDialog(
             show: _adding,
-            title: '添加里课卡片',
+            title: '添加自学卡片',
             summary: '一行一张，可以一次粘贴整份讲次列表',
             onDismissRequest: () => setState(() => _adding = false),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MiuixTextField(controller: _group, label: '属于哪门自学课，比如 MIT 16.01', useLabelAsPlaceholder: true, singleLine: true),
+                MiuixTextField(
+                  controller: _group,
+                  label: '属于哪门自学课，比如 MIT 16.01',
+                  useLabelAsPlaceholder: true,
+                  singleLine: true,
+                ),
                 const SizedBox(height: 12),
                 MiuixTextField(
                   controller: _title,
@@ -216,11 +289,23 @@ class _PlanPageState extends State<PlanPage> {
                   maxLines: 8,
                 ),
                 const SizedBox(height: 20),
-                Row(children: [
-                  Expanded(child: SecondaryButton(text: '取消', onPressed: () => setState(() => _adding = false))),
-                  const SizedBox(width: 12),
-                  Expanded(child: PrimaryButton(text: '添加', onPressed: () => _saveCards(state))),
-                ]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SecondaryButton(
+                        text: '取消',
+                        onPressed: () => setState(() => _adding = false),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: PrimaryButton(
+                        text: '添加',
+                        onPressed: () => _saveCards(state),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -256,42 +341,55 @@ class _SlotGrid extends StatelessWidget {
     final today = dateOnly(DateTime.now());
     return Column(
       children: [
-        Row(children: [
-          const SizedBox(width: 30),
-          for (final weekday in days)
-            Expanded(
-              child: Builder(builder: (context) {
-                final date = table.dateFor(week, weekday);
-                final isToday = date != null && sameDate(date, today);
-                return Text(
-                  weekdayShort[weekday - 1],
-                  textAlign: TextAlign.center,
-                  style: TypeScale.caption.copyWith(color: isToday ? palette.accentText : palette.secondary),
-                );
-              }),
-            ),
-        ]),
+        Row(
+          children: [
+            const SizedBox(width: 30),
+            for (final weekday in days)
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    final date = table.dateFor(week, weekday);
+                    final isToday = date != null && sameDate(date, today);
+                    return Text(
+                      weekdayShort[weekday - 1],
+                      textAlign: TextAlign.center,
+                      style: TypeScale.caption.copyWith(
+                        color: isToday ? palette.accentText : palette.secondary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
         const SizedBox(height: 4),
         Expanded(
           child: Column(
             children: [
               for (var slot = 0; slot < slots; slot++)
                 Expanded(
-                  child: Row(children: [
-                    SizedBox(
-                      width: 30,
-                      child: Text('${slot * 2 + 1}–${slot * 2 + 2}',
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        child: Text(
+                          '${slot * 2 + 1}–${slot * 2 + 2}',
                           textAlign: TextAlign.center,
-                          style: TypeScale.caption.copyWith(fontWeight: FontWeight.w400, color: palette.secondary)),
-                    ),
-                    for (final weekday in days)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(1.5),
-                          child: _slot(context, weekday, slot * 2 + 1),
+                          style: TypeScale.caption.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: palette.secondary,
+                          ),
                         ),
                       ),
-                  ]),
+                      for (final weekday in days)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(1.5),
+                            child: _slot(context, weekday, slot * 2 + 1),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -305,22 +403,37 @@ class _SlotGrid extends StatelessWidget {
     final date = table.dateFor(week, weekday);
     if (date == null) return const SizedBox.shrink();
     final plan = planAt(plans, date, start) ?? planAt(plans, date, start + 1);
-    final courses = table.coursesForDate(date).where(
-        (course) => course.startPeriod <= start + 1 && course.endPeriod >= start);
+    final courses = table
+        .coursesForDate(date)
+        .where(
+          (course) =>
+              course.startPeriod <= start + 1 && course.endPeriod >= start,
+        );
     final course = courses.isEmpty ? null : courses.first;
     return DragTarget<PlanItem>(
       onWillAcceptWithDetails: (details) => details.data.id != plan?.id,
-      onAcceptWithDetails: (details) => onDrop(details.data, date, start),
+      onAcceptWithDetails: (details) {
+        HapticFeedback.selectionClick();
+        onDrop(details.data, date, start);
+      },
       builder: (context, candidates, _) {
         final hovering = candidates.isNotEmpty;
         Widget content;
         if (plan != null) {
           content = LongPressDraggable<PlanItem>(
+            onDragStarted: HapticFeedback.mediumImpact,
             data: plan,
             feedback: _DragFeedback(title: plan.title),
-            childWhenDragging: _cell(context, fill: palette.ghostFill, ink: palette.ghostInk, title: course?.name ?? ''),
-            child: MiuixPressable(
+            childWhenDragging: _cell(
+              context,
+              fill: palette.ghostFill,
+              ink: palette.ghostInk,
+              title: course?.name ?? '',
+            ),
+            child: Tappable(
               onPressed: () => onPlanTap(plan),
+              semanticLabel:
+                  '${weekdayNames[weekday - 1]} 第 $start–${start + 1} 节 自学 ${plan.title}',
               shape: MiuixSquircleBorder(cornerRadius: 8),
               child: _cell(
                 context,
@@ -329,28 +442,50 @@ class _SlotGrid extends StatelessWidget {
                 title: plan.title,
                 subtitle: course?.name,
                 done: plan.done,
-                border: course == null ? Brand.planInk(palette.dark).withValues(alpha: 0.6) : null,
+                border: course == null
+                    ? Brand.planInk(palette.dark).withValues(alpha: 0.6)
+                    : null,
               ),
             ),
           );
         } else if (course != null) {
-          content = MiuixPressable(
+          content = Tappable(
             onPressed: () => onCourseTap(course, date),
+            semanticLabel:
+                '${weekdayNames[weekday - 1]} 第 $start–${start + 1} 节 ${course.name}',
             shape: MiuixSquircleBorder(cornerRadius: 8),
-            child: _cell(context, fill: palette.ghostFill, ink: palette.secondary, title: course.name),
+            child: _cell(
+              context,
+              fill: palette.dark
+                  ? const Color(0x1FFFFFFF)
+                  : const Color(0x0D1A1A1A),
+              ink: palette.dark ? palette.secondary : const Color(0xFF55555A),
+              title: course.name,
+            ),
           );
         } else {
-          content = _cell(context, fill: const Color(0x00000000), ink: palette.secondary, title: '', border: palette.line);
+          content = _cell(
+            context,
+            fill: palette.dark
+                ? const Color(0x0DFFFFFF)
+                : const Color(0x4DFFFFFF),
+            ink: palette.secondary,
+            title: '',
+          );
         }
         return AnimatedScale(
           scale: hovering ? 1.06 : 1,
-          duration: const Duration(milliseconds: 160),
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 160),
           child: DecoratedBox(
             position: DecorationPosition.foreground,
             decoration: ShapeDecoration(
               shape: MiuixSquircleBorder(
                 cornerRadius: 8,
-                side: hovering ? const BorderSide(color: Brand.accent, width: 2) : BorderSide.none,
+                side: hovering
+                    ? const BorderSide(color: Brand.accent, width: 2)
+                    : BorderSide.none,
               ),
             ),
             child: content,
@@ -375,32 +510,41 @@ class _SlotGrid extends StatelessWidget {
         color: fill,
         shape: MiuixSquircleBorder(
           cornerRadius: 8,
-          side: border == null ? BorderSide.none : BorderSide(color: border, width: 1),
+          side: border == null
+              ? BorderSide.none
+              : BorderSide(color: border, width: 1),
         ),
       ),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Flexible(
-              child: Text(
-                title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TypeScale.caption.copyWith(
-                  color: ink,
-                  decoration: done ? TextDecoration.lineThrough : null,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypeScale.caption.copyWith(
+                    color: ink,
+                    decoration: done ? TextDecoration.lineThrough : null,
+                  ),
                 ),
               ),
-            ),
-            if (subtitle != null && constraints.maxHeight > 44)
-              Text('原：$subtitle',
+              if (subtitle != null && constraints.maxHeight > 44)
+                Text(
+                  '原：$subtitle',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TypeScale.caption.copyWith(fontWeight: FontWeight.w400, color: ink)),
-          ],
-        );
-      }),
+                  style: TypeScale.caption.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: ink,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -419,14 +563,22 @@ class _DragFeedback extends StatelessWidget {
         decoration: ShapeDecoration(
           color: Brand.hero,
           shape: MiuixSquircleBorder(cornerRadius: 12),
-          shadows: const [BoxShadow(color: Color(0x59C2410F), blurRadius: 30, offset: Offset(0, 14))],
+          shadows: const [
+            BoxShadow(
+              color: Color(0x59C2410F),
+              blurRadius: 30,
+              offset: Offset(0, 14),
+            ),
+          ],
         ),
         child: DefaultTextStyle(
           style: const TextStyle(decoration: TextDecoration.none),
-          child: Text(title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TypeScale.chip.copyWith(color: const Color(0xFFFFFFFF))),
+          child: Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TypeScale.chip.copyWith(color: const Color(0xFFFFFFFF)),
+          ),
         ),
       ),
     );
@@ -461,18 +613,28 @@ class _Backlog extends StatelessWidget {
       final selected = filter == value;
       return Padding(
         padding: const EdgeInsets.only(right: 8),
-        child: MiuixPressable(
+        child: Tappable(
           onPressed: () => onFilter(value),
+          semanticLabel: label,
           shape: MiuixSquircleBorder(cornerRadius: 16),
-          child: Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.center,
-            decoration: ShapeDecoration(
-              color: selected ? palette.ink : palette.ghostFill,
-              shape: MiuixSquircleBorder(cornerRadius: 16),
+          // 32 dp pill inside a 48 dp hit area.
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                color: selected ? palette.ink : palette.ghostFill,
+                shape: MiuixSquircleBorder(cornerRadius: 16),
+              ),
+              child: Text(
+                label,
+                style: TypeScale.chip.copyWith(
+                  color: selected ? palette.card : palette.ink,
+                ),
+              ),
             ),
-            child: Text(label, style: TypeScale.chip.copyWith(color: selected ? palette.card : palette.ink)),
           ),
         ),
       );
@@ -482,28 +644,63 @@ class _Backlog extends StatelessWidget {
       height: 250 + bottomInset,
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: ShapeDecoration(
-        color: palette.card,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-        shadows: [BoxShadow(color: palette.dark ? const Color(0x66000000) : const Color(0x0F5A280A), blurRadius: 24, offset: const Offset(0, -2))],
+        // Denser than a card: the panel carries text over the gradient.
+        color: palette.dark ? const Color(0xB828221E) : const Color(0xBFFFFFFF),
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          side: BorderSide(
+            color: palette.dark
+                ? const Color(0x1AFFFFFF)
+                : const Color(0xD9FFFFFF),
+          ),
+        ),
+        shadows: [
+          BoxShadow(
+            color: palette.dark
+                ? const Color(0x66000000)
+                : const Color(0x145A280A),
+            blurRadius: 30,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
-            child: Row(children: [
-              Expanded(child: Text('待排 · ${cards.length} 张', style: TypeScale.card.copyWith(color: palette.ink))),
-              MiuixTextButton('自动排', onPressed: onAuto),
-              const SizedBox(width: 8),
-              RoundIconButton(icon: 'add', label: '添加卡片', onPressed: onAdd),
-            ]),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '待排 · ${cards.length} 张',
+                    style: TypeScale.card.copyWith(color: palette.ink),
+                  ),
+                ),
+                GlassTextButton(
+                  text: '自动排',
+                  icon: AppIcons.wand,
+                  onPressed: onAuto,
+                  accent: true,
+                ),
+                const SizedBox(width: 8),
+                RoundIconButton(
+                  icon: AppIcons.plus,
+                  label: '添加卡片',
+                  onPressed: onAdd,
+                ),
+              ],
+            ),
           ),
           SizedBox(
-            height: 32,
+            height: 48,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [chip('全部', null), for (final group in groups) chip(group, group)],
+              children: [
+                chip('全部', null),
+                for (final group in groups) chip(group, group),
+              ],
             ),
           ),
           const SizedBox(height: 10),
@@ -511,47 +708,94 @@ class _Backlog extends StatelessWidget {
             child: cards.isEmpty
                 ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text('点右上角 + 添加卡片，比如把 MIT 16.01 的讲次一行一行贴进去。',
-                          textAlign: TextAlign.center,
-                          style: TypeScale.secondary.copyWith(color: palette.secondary)),
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppIcon(
+                            AppIcons.study,
+                            size: 36,
+                            color: palette.accentText,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '点右上角 + 添加卡片，比如把 MIT 16.01 的讲次一行一行贴进去。',
+                            textAlign: TextAlign.center,
+                            style: TypeScale.secondary.copyWith(
+                              color: palette.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      mainAxisExtent: 64,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          mainAxisExtent: 64,
+                        ),
                     itemCount: cards.length,
                     itemBuilder: (context, index) {
                       final card = cards[index];
                       final tile = Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: ShapeDecoration(
-                          color: palette.surface,
-                          shape: MiuixSquircleBorder(cornerRadius: 16),
+                          color: palette.dark
+                              ? const Color(0x14FFFFFF)
+                              : const Color(0xB3FFFFFF),
+                          shape: MiuixSquircleBorder(
+                            cornerRadius: 16,
+                            side: BorderSide(
+                              color: palette.dark
+                                  ? const Color(0x1AFFFFFF)
+                                  : const Color(0xE6FFFFFF),
+                            ),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(card.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TypeScale.chip.copyWith(color: palette.ink)),
+                            Row(
+                              children: [
+                                AppIcon(
+                                  AppIcons.study,
+                                  size: 15,
+                                  color: palette.accentText,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    card.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TypeScale.chip.copyWith(
+                                      color: palette.ink,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
                               [
                                 if (card.group.isNotEmpty) card.group,
-                                if (card.deferCount > 0) '拖延 ${card.deferCount} 次',
+                                if (card.deferCount > 0)
+                                  '拖延 ${card.deferCount} 次',
                               ].join(' · '),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TypeScale.caption.copyWith(
                                 fontWeight: FontWeight.w400,
-                                color: card.deferCount >= 3 ? palette.colors.error : palette.secondary,
+                                color: card.deferCount >= 3
+                                    ? palette.colors.error
+                                    : palette.secondary,
                               ),
                             ),
                           ],
@@ -559,10 +803,12 @@ class _Backlog extends StatelessWidget {
                       );
                       return LongPressDraggable<PlanItem>(
                         data: card,
+                        onDragStarted: HapticFeedback.mediumImpact,
                         feedback: _DragFeedback(title: card.title),
                         childWhenDragging: Opacity(opacity: 0.35, child: tile),
-                        child: MiuixPressable(
+                        child: Tappable(
                           onPressed: () => onCardTap(card),
+                          semanticLabel: '自学卡片 ${card.title}，长按拖进格子',
                           shape: MiuixSquircleBorder(cornerRadius: 16),
                           child: tile,
                         ),

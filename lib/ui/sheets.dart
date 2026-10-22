@@ -7,6 +7,7 @@ import '../models.dart';
 import '../plan.dart';
 import '../reminders.dart';
 import 'common.dart';
+import 'icons.dart';
 import 'tokens.dart';
 
 /// What a page's detail sheet should show.
@@ -60,7 +61,7 @@ class _SheetLayerState extends State<SheetLayer> {
         final shown = _last;
         final title = switch (shown) {
           CourseSheetRequest(:final course) => course.name,
-          PlanSheetRequest() => '里课',
+          PlanSheetRequest() => '自学',
           EventSheetRequest(:final event) => event == null ? '新建事件' : '编辑事件',
           null => null,
         };
@@ -71,23 +72,28 @@ class _SheetLayerState extends State<SheetLayer> {
           onDismissFinished: () => setState(() => _last = null),
           content: Material(
             type: MaterialType.transparency,
-            child: SingleChildScrollView(child: switch (shown) {
-              CourseSheetRequest(:final course, :final date) => _CourseSheet(
+            child: SingleChildScrollView(
+              child: switch (shown) {
+                CourseSheetRequest(:final course, :final date) => _CourseSheet(
                   key: ValueKey(course),
                   course: course,
                   date: date,
                   close: widget.controller.close,
                 ),
-              PlanSheetRequest(:final planId) =>
-                _PlanSheet(key: ValueKey(planId), planId: planId, close: widget.controller.close),
-              EventSheetRequest(:final event, :final date) => EventEditor(
+                PlanSheetRequest(:final planId) => _PlanSheet(
+                  key: ValueKey(planId),
+                  planId: planId,
+                  close: widget.controller.close,
+                ),
+                EventSheetRequest(:final event, :final date) => EventEditor(
                   key: ValueKey(event?.id ?? 'new'),
                   event: event,
                   initialDate: date,
                   close: widget.controller.close,
                 ),
-              null => const SizedBox(height: 120),
-            }),
+                null => const SizedBox(height: 120),
+              },
+            ),
           ),
         );
       },
@@ -124,7 +130,7 @@ String periodRangeText(int start, int end) {
 
 class _InfoLine extends StatelessWidget {
   const _InfoLine(this.icon, this.text);
-  final String icon;
+  final String icon; // one of AppIcons
   final String text;
 
   @override
@@ -134,9 +140,14 @@ class _InfoLine extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          os4Icon(icon, size: 20, tint: palette.secondary),
+          AppIcon(icon, size: 20, color: palette.secondary),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: TypeScale.value.copyWith(color: palette.ink))),
+          Expanded(
+            child: Text(
+              text,
+              style: TypeScale.value.copyWith(color: palette.ink),
+            ),
+          ),
         ],
       ),
     );
@@ -144,7 +155,12 @@ class _InfoLine extends StatelessWidget {
 }
 
 class _CourseSheet extends StatelessWidget {
-  const _CourseSheet({super.key, required this.course, required this.date, required this.close});
+  const _CourseSheet({
+    super.key,
+    required this.course,
+    required this.date,
+    required this.close,
+  });
 
   final Course course;
   final DateTime date;
@@ -155,7 +171,11 @@ class _CourseSheet extends StatelessWidget {
     final state = AppScope.of(context);
     final palette = Palette(context);
     PlanItem? plan;
-    for (var period = course.startPeriod; period <= course.endPeriod && plan == null; period++) {
+    for (
+      var period = course.startPeriod;
+      period <= course.endPeriod && plan == null;
+      period++
+    ) {
       plan = planAt(state.plans, date, period);
     }
     final backlog = state.plans.where((item) => !item.scheduled).toList();
@@ -163,47 +183,70 @@ class _CourseSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _InfoLine('recent', '${weekdayNames[course.weekday - 1]} ${periodRangeText(course.startPeriod, course.endPeriod)}'),
+        _InfoLine(
+          'recent',
+          '${weekdayNames[course.weekday - 1]} ${periodRangeText(course.startPeriod, course.endPeriod)}',
+        ),
         if (course.room.isNotEmpty)
-          _InfoLine('location', [course.campus, course.room].where((part) => part.isNotEmpty).join(' ')),
-        if (course.teacher.isNotEmpty) _InfoLine('contacts', course.teacher),
+          _InfoLine(
+            'location',
+            [
+              course.campus,
+              course.room,
+            ].where((part) => part.isNotEmpty).join(' '),
+          ),
+        if (course.teacher.isNotEmpty)
+          _InfoLine(AppIcons.person, course.teacher),
         _InfoLine(
           'months',
           '${weekRangesText(course.weeks)}'
-          '${thisWeek != null && !course.weeks.contains(thisWeek) ? '（本周没有）' : ''}',
+              '${thisWeek != null && !course.weeks.contains(thisWeek) ? '（本周没有）' : ''}',
         ),
         const SizedBox(height: 12),
-        Text('这节课的里课', style: TypeScale.section.copyWith(color: palette.secondary)),
+        Text(
+          '在这节课里自学',
+          style: TypeScale.section.copyWith(color: palette.secondary),
+        ),
         const SizedBox(height: 8),
         if (plan != null) ...[
-          Align(alignment: Alignment.centerLeft, child: InnerPlanChip(title: plan.title, done: plan.done)),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InnerPlanChip(title: plan.title, done: plan.done),
+          ),
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: PrimaryButton(
-                text: plan.done ? '标为未完成' : '学完了',
-                onPressed: () {
-                  state.upsertPlan(plan!.copyWith(done: !plan.done));
-                  close();
-                },
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: plan.done ? '标为未完成' : '学完了',
+                  onPressed: () {
+                    state.upsertPlan(plan!.copyWith(done: !plan.done));
+                    close();
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SecondaryButton(
-                text: '放回待排',
-                onPressed: () {
-                  state.upsertPlan(plan!.unplaced());
-                  close();
-                },
+              const SizedBox(width: 12),
+              Expanded(
+                child: SecondaryButton(
+                  text: '放回待排',
+                  onPressed: () {
+                    state.upsertPlan(plan!.unplaced());
+                    close();
+                  },
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ] else if (backlog.isEmpty)
-          Text('还没有待排的里课卡片。到「里课」页添加，比如「MIT 16.01 第 4 讲」。',
-              style: TypeScale.secondary.copyWith(color: palette.secondary))
+          Text(
+            '还没有待排的自学卡片。到「自学」页添加，比如「MIT 16.01 第 4 讲」。',
+            style: TypeScale.secondary.copyWith(color: palette.secondary),
+          )
         else ...[
-          Text('选一张卡片放进这节课：', style: TypeScale.secondary.copyWith(color: palette.secondary)),
+          Text(
+            '选一张卡片放进这节课：',
+            style: TypeScale.secondary.copyWith(color: palette.secondary),
+          ),
           const SizedBox(height: 4),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 240),
@@ -216,9 +259,20 @@ class _CourseSheet extends StatelessWidget {
                     insideMargin: const EdgeInsets.symmetric(vertical: 12),
                     title: item.title,
                     summary: item.group.isEmpty ? null : item.group,
-                    endActions: [os4Icon('add', size: 20, tint: palette.accentText)],
+                    endActions: [
+                      AppIcon(
+                        AppIcons.plus,
+                        size: 20,
+                        color: palette.accentText,
+                      ),
+                    ],
                     onClick: () {
-                      state.placePlan(item, date, course.startPeriod, course.endPeriod);
+                      state.placePlan(
+                        item,
+                        date,
+                        course.startPeriod,
+                        course.endPeriod,
+                      );
                       close();
                     },
                   ),
@@ -252,47 +306,55 @@ class _PlanSheet extends StatelessWidget {
         if (plan.group.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Text(plan.group, style: TypeScale.secondary.copyWith(color: palette.secondary)),
+            child: Text(
+              plan.group,
+              style: TypeScale.secondary.copyWith(color: palette.secondary),
+            ),
           ),
         const SizedBox(height: 8),
         if (plan.scheduled)
-          _InfoLine('recent',
-              '${plan.date!.month} 月 ${plan.date!.day} 日 ${weekdayNames[plan.date!.weekday - 1]} · ${periodRangeText(plan.startPeriod!, plan.endPeriod!)}'),
-        if (plan.deferCount > 0) _InfoLine('refresh', '已经放回待排 ${plan.deferCount} 次'),
-        if (plan.note.isNotEmpty) _InfoLine('notes', plan.note),
+          _InfoLine(
+            'recent',
+            '${plan.date!.month} 月 ${plan.date!.day} 日 ${weekdayNames[plan.date!.weekday - 1]} · ${periodRangeText(plan.startPeriod!, plan.endPeriod!)}',
+          ),
+        if (plan.deferCount > 0)
+          _InfoLine(AppIcons.undo, '已经放回待排 ${plan.deferCount} 次'),
+        if (plan.note.isNotEmpty) _InfoLine(AppIcons.journal, plan.note),
         const SizedBox(height: 16),
-        Row(children: [
-          if (plan.scheduled) ...[
-            Expanded(
-              child: PrimaryButton(
-                text: plan.done ? '标为未完成' : '学完了',
-                onPressed: () {
-                  state.upsertPlan(plan.copyWith(done: !plan.done));
-                  close();
-                },
+        Row(
+          children: [
+            if (plan.scheduled) ...[
+              Expanded(
+                child: PrimaryButton(
+                  text: plan.done ? '标为未完成' : '学完了',
+                  onPressed: () {
+                    state.upsertPlan(plan.copyWith(done: !plan.done));
+                    close();
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SecondaryButton(
-                text: '放回待排',
-                onPressed: () {
-                  state.upsertPlan(plan.unplaced());
-                  close();
-                },
+              const SizedBox(width: 12),
+              Expanded(
+                child: SecondaryButton(
+                  text: '放回待排',
+                  onPressed: () {
+                    state.upsertPlan(plan.unplaced());
+                    close();
+                  },
+                ),
               ),
-            ),
-          ] else
-            Expanded(
-              child: SecondaryButton(
-                text: '删除卡片',
-                onPressed: () {
-                  state.deletePlan(plan.id);
-                  close();
-                },
+            ] else
+              Expanded(
+                child: SecondaryButton(
+                  text: '删除卡片',
+                  onPressed: () {
+                    state.deletePlan(plan.id);
+                    close();
+                  },
+                ),
               ),
-            ),
-        ]),
+          ],
+        ),
         const SizedBox(height: 24),
       ],
     );
@@ -301,7 +363,12 @@ class _PlanSheet extends StatelessWidget {
 
 /// Create or edit a custom event, inline in a bottom sheet.
 class EventEditor extends StatefulWidget {
-  const EventEditor({super.key, this.event, required this.initialDate, required this.close});
+  const EventEditor({
+    super.key,
+    this.event,
+    required this.initialDate,
+    required this.close,
+  });
 
   final CustomEvent? event;
   final DateTime initialDate;
@@ -343,16 +410,20 @@ class _EventEditorState extends State<EventEditor> {
       setState(() => _error = '结束时间要晚于开始时间');
       return;
     }
-    AppScope.read(context).upsertEvent(CustomEvent(
-      id: widget.event?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
-      title: _title.text.trim(),
-      location: _location.text.trim(),
-      date: dateOnly(_date),
-      startMinutes: _start,
-      endMinutes: _end,
-      weekly: _weekly,
-      reminderMinutes: _reminder,
-    ));
+    AppScope.read(context).upsertEvent(
+      CustomEvent(
+        id:
+            widget.event?.id ??
+            DateTime.now().microsecondsSinceEpoch.toString(),
+        title: _title.text.trim(),
+        location: _location.text.trim(),
+        date: dateOnly(_date),
+        startMinutes: _start,
+        endMinutes: _end,
+        weekly: _weekly,
+        reminderMinutes: _reminder,
+      ),
+    );
     widget.close();
   }
 
@@ -401,14 +472,28 @@ class _EventEditorState extends State<EventEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        MiuixTextField(controller: _title, label: '名称，比如「社团例会」', useLabelAsPlaceholder: true, singleLine: true),
+        MiuixTextField(
+          controller: _title,
+          label: '名称，比如「社团例会」',
+          useLabelAsPlaceholder: true,
+          singleLine: true,
+        ),
         const SizedBox(height: 12),
-        MiuixTextField(controller: _location, label: '地点（可不填）', useLabelAsPlaceholder: true, singleLine: true),
+        MiuixTextField(
+          controller: _location,
+          label: '地点（可不填）',
+          useLabelAsPlaceholder: true,
+          singleLine: true,
+        ),
         const SizedBox(height: 8),
         MiuixArrowPreference(
           title: '日期',
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
-          endActions: [value('${_date.month} 月 ${_date.day} 日 ${weekdayNames[_date.weekday - 1]}')],
+          endActions: [
+            value(
+              '${_date.month} 月 ${_date.day} 日 ${weekdayNames[_date.weekday - 1]}',
+            ),
+          ],
           onClick: () => _toggle('date'),
         ),
         if (_expanded == 'date')
@@ -425,14 +510,16 @@ class _EventEditorState extends State<EventEditor> {
           endActions: [value(clockText(_start))],
           onClick: () => _toggle('start'),
         ),
-        if (_expanded == 'start') _timePicker(_start, (minutes) => setState(() => _start = minutes)),
+        if (_expanded == 'start')
+          _timePicker(_start, (minutes) => setState(() => _start = minutes)),
         MiuixArrowPreference(
           title: '结束',
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
           endActions: [value(clockText(_end))],
           onClick: () => _toggle('end'),
         ),
-        if (_expanded == 'end') _timePicker(_end, (minutes) => setState(() => _end = minutes)),
+        if (_expanded == 'end')
+          _timePicker(_end, (minutes) => setState(() => _end = minutes)),
         MiuixSwitchPreference(
           title: '每周重复',
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
@@ -442,31 +529,44 @@ class _EventEditorState extends State<EventEditor> {
         MiuixOverlayDropdownPreference(
           title: '提醒',
           insideMargin: const EdgeInsets.symmetric(vertical: 14),
-          items: [for (final minutes in _reminders) minutes == 0 ? '不提醒' : '提前 $minutes 分钟'],
-          selectedIndex: _reminders.indexOf(_reminder).clamp(0, _reminders.length - 1),
-          onSelectedIndexChange: (index) => setState(() => _reminder = _reminders[index]),
+          items: [
+            for (final minutes in _reminders)
+              minutes == 0 ? '不提醒' : '提前 $minutes 分钟',
+          ],
+          selectedIndex: _reminders
+              .indexOf(_reminder)
+              .clamp(0, _reminders.length - 1),
+          onSelectedIndexChange: (index) =>
+              setState(() => _reminder = _reminders[index]),
         ),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(_error!, style: TypeScale.secondary.copyWith(color: palette.colors.error)),
+            child: Text(
+              _error!,
+              style: TypeScale.secondary.copyWith(color: palette.colors.error),
+            ),
           ),
         const SizedBox(height: 16),
-        Row(children: [
-          if (widget.event != null) ...[
-            Expanded(
-              child: SecondaryButton(
-                text: '删除',
-                onPressed: () {
-                  AppScope.read(context).deleteEvent(widget.event!.id);
-                  widget.close();
-                },
+        Row(
+          children: [
+            if (widget.event != null) ...[
+              Expanded(
+                child: SecondaryButton(
+                  text: '删除',
+                  onPressed: () {
+                    AppScope.read(context).deleteEvent(widget.event!.id);
+                    widget.close();
+                  },
+                ),
               ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: PrimaryButton(text: '保存', onPressed: _save),
             ),
-            const SizedBox(width: 12),
           ],
-          Expanded(child: PrimaryButton(text: '保存', onPressed: _save)),
-        ]),
+        ),
         const SizedBox(height: 24),
       ],
     );

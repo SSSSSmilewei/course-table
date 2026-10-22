@@ -86,11 +86,15 @@ class NotificationService {
     await initialize();
     if (Platform.isAndroid) {
       await _plugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
     } else if (Platform.isIOS) {
       await _plugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
           ?.requestPermissions(alert: true, sound: true, badge: false);
     }
   }
@@ -106,8 +110,9 @@ class NotificationService {
     final courses = futureCourses(timetable, now, limit: 100);
     for (var index = 0; index < courses.length; index++) {
       final occurrence = courses[index];
-      final notificationTime =
-          occurrence.start.subtract(Duration(minutes: minutesBefore));
+      final notificationTime = occurrence.start.subtract(
+        Duration(minutes: minutesBefore),
+      );
       if (!notificationTime.isAfter(now)) continue;
       final periods =
           '第${occurrence.course.startPeriod}-${occurrence.course.endPeriod}节';
@@ -133,11 +138,16 @@ class NotificationService {
     final now = DateTime.now();
     var id = 1000;
     for (var offset = 0; offset <= 120 && id < 1100; offset++) {
-      final date = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
+      final date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(Duration(days: offset));
       for (final event in customEventsForDate(events, date)) {
         if (event.reminderMinutes <= 0) continue;
-        final notificationTime =
-            event.startOn(date).subtract(Duration(minutes: event.reminderMinutes));
+        final notificationTime = event
+            .startOn(date)
+            .subtract(Duration(minutes: event.reminderMinutes));
         if (!notificationTime.isAfter(now)) continue;
         await _plugin.zonedSchedule(
           id: id++,
@@ -159,15 +169,38 @@ class NotificationService {
     await _plugin.cancel(id: 2001);
     await _plugin.cancel(id: 2002);
     if (!settings.enabled) return;
-    await _daily(2001, settings.morningMinutes, '晨间一分钟',
-        _firstLine(settings.morningPrompt), morningPayload);
-    await _daily(2002, settings.eveningMinutes, '晚间一分钟',
-        _firstLine(settings.eveningPrompt), eveningPayload);
+    await _daily(
+      2001,
+      settings.morningMinutes,
+      '晨间一分钟',
+      _firstLine(settings.morningPrompt),
+      morningPayload,
+    );
+    await _daily(
+      2002,
+      settings.eveningMinutes,
+      '晚间一分钟',
+      _firstLine(settings.eveningPrompt),
+      eveningPayload,
+    );
   }
 
-  Future<void> _daily(int id, int minutes, String title, String body, String payload) async {
+  Future<void> _daily(
+    int id,
+    int minutes,
+    String title,
+    String body,
+    String payload,
+  ) async {
     final now = tz.TZDateTime.now(tz.local);
-    var time = tz.TZDateTime(tz.local, now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
+    var time = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      minutes ~/ 60,
+      minutes % 60,
+    );
     if (!time.isAfter(now)) time = time.add(const Duration(days: 1));
     await _plugin.zonedSchedule(
       id: id,

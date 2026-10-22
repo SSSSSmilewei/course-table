@@ -1,11 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart' show Material, MaterialType;
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_miuix/miuix.dart';
 
 import '../notification_service.dart';
 import 'common.dart';
+import 'icons.dart';
+import 'glass.dart';
 import 'plan_page.dart';
 import 'reflection_page.dart';
 import 'settings_page.dart';
@@ -28,10 +31,10 @@ class _AppShellState extends State<AppShell> {
   final _weekPage = GlobalKey<WeekPageState>();
 
   static const _tabs = [
-    ('今天', 'weeks'),
-    ('课表', 'gridView'),
-    ('里课', 'notes'),
-    ('设置', 'settings'),
+    ('今天', AppIcons.today),
+    ('课表', AppIcons.week),
+    ('自学', AppIcons.study),
+    ('设置', AppIcons.settings),
   ];
 
   @override
@@ -53,7 +56,9 @@ class _AppShellState extends State<AppShell> {
   void _openPayload(String payload) {
     final evening = payload == NotificationService.eveningPayload;
     if (payload != NotificationService.morningPayload && !evening) return;
-    Navigator.of(context).push(SlideRoute((_) => ReflectionPage(evening: evening)));
+    Navigator.of(
+      context,
+    ).push(SlideRoute((_) => ReflectionPage(evening: evening), ambient: false));
   }
 
   /// Jumps to the week tab showing [week].
@@ -85,10 +90,17 @@ class _AppShellState extends State<AppShell> {
             child: MiuixGlassNavigationBar(
               backdrop: _backdrop,
               selectedIndex: _tab,
-              onSelect: (index) => setState(() => _tab = index),
+              onSelect: (index) {
+                if (index == _tab) return;
+                HapticFeedback.selectionClick();
+                setState(() => _tab = index);
+              },
               items: [
                 for (final (label, icon) in _tabs)
-                  MiuixGlassNavigationItem(icon: os4Icon(icon), label: label),
+                  MiuixGlassNavigationItem(
+                    icon: AppIcon(icon, size: 24),
+                    label: label,
+                  ),
               ],
             ),
           ),
@@ -100,12 +112,21 @@ class _AppShellState extends State<AppShell> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                ColoredBox(color: palette.surface),
-                if (background != null && File(background).existsSync())
-                  Opacity(
-                    opacity: state.appearance.backgroundOpacity,
-                    child: Image.file(File(background), fit: BoxFit.cover),
+                const AmbientBackground(),
+                if (background != null && File(background).existsSync()) ...[
+                  Image.file(File(background), fit: BoxFit.cover),
+                  // A wash keeps text readable on any wallpaper; the
+                  // "visibility" setting decides how much picture shows.
+                  ColoredBox(
+                    color:
+                        (palette.dark
+                                ? const Color(0xFF000000)
+                                : const Color(0xFFFAFAFA))
+                            .withValues(
+                              alpha: 1 - state.appearance.backgroundOpacity,
+                            ),
                   ),
+                ],
                 MediaQuery(
                   data: media.copyWith(
                     padding: media.padding.copyWith(bottom: padding.bottom),

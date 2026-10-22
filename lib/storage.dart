@@ -27,8 +27,10 @@ class TimetableStorage {
   }
 
   Future<void> save(Timetable timetable) async {
-    await (await SharedPreferences.getInstance())
-        .setString(_key, jsonEncode(timetable.toJson()));
+    await (await SharedPreferences.getInstance()).setString(
+      _key,
+      jsonEncode(timetable.toJson()),
+    );
   }
 
   Future<int> loadReminderMinutes() async =>
@@ -57,22 +59,32 @@ class TimetableStorage {
       _saveList(_journalKey, entries.map((entry) => entry.toJson()));
 
   Future<ReflectionSettings> loadReflection() async {
-    final value = (await SharedPreferences.getInstance()).getString(_reflectionKey);
+    final value = (await SharedPreferences.getInstance()).getString(
+      _reflectionKey,
+    );
     return value == null
         ? const ReflectionSettings()
-        : ReflectionSettings.fromJson(jsonDecode(value) as Map<String, dynamic>);
+        : ReflectionSettings.fromJson(
+            jsonDecode(value) as Map<String, dynamic>,
+          );
   }
 
   Future<void> saveReflection(ReflectionSettings settings) async {
-    await (await SharedPreferences.getInstance())
-        .setString(_reflectionKey, jsonEncode(settings.toJson()));
+    await (await SharedPreferences.getInstance()).setString(
+      _reflectionKey,
+      jsonEncode(settings.toJson()),
+    );
   }
 
   Future<bool> loadShowOtherWeeks() async =>
-      (await SharedPreferences.getInstance()).getBool(_showOtherWeeksKey) ?? true;
+      (await SharedPreferences.getInstance()).getBool(_showOtherWeeksKey) ??
+      true;
 
   Future<void> saveShowOtherWeeks(bool value) async {
-    await (await SharedPreferences.getInstance()).setBool(_showOtherWeeksKey, value);
+    await (await SharedPreferences.getInstance()).setBool(
+      _showOtherWeeksKey,
+      value,
+    );
   }
 
   Future<AppearanceSettings> loadAppearance() async {
@@ -96,7 +108,10 @@ class TimetableStorage {
     } else {
       await preferences.setString(_backgroundKey, appearance.backgroundPath!);
     }
-    await preferences.setDouble(_backgroundOpacityKey, appearance.backgroundOpacity);
+    await preferences.setDouble(
+      _backgroundOpacityKey,
+      appearance.backgroundOpacity,
+    );
   }
 
   Future<List<T>> _loadList<T>(
@@ -110,8 +125,13 @@ class TimetableStorage {
         .toList();
   }
 
-  Future<void> _saveList(String key, Iterable<Map<String, dynamic>> items) async {
-    await (await SharedPreferences.getInstance())
-        .setString(key, jsonEncode(items.toList()));
+  Future<void> _saveList(
+    String key,
+    Iterable<Map<String, dynamic>> items,
+  ) async {
+    await (await SharedPreferences.getInstance()).setString(
+      key,
+      jsonEncode(items.toList()),
+    );
   }
 }

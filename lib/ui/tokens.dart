@@ -1,4 +1,3 @@
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_miuix/miuix.dart';
 
@@ -21,13 +20,12 @@ class Brand {
       dark ? const Color(0xFFFFB98A) : const Color(0xFF8F3508);
 
   static MiuixColors light() => lightColorScheme().copy(
-        primary: const Color(0xFFE2601F),
-        onSurface: const Color(0xFF1A1A1A),
-      );
+    primary: const Color(0xFFE2601F),
+    onSurface: const Color(0xFF1A1A1A),
+  );
 
-  static MiuixColors dark() => darkColorScheme().copy(
-        primary: const Color(0xFFE2601F),
-      );
+  static MiuixColors dark() =>
+      darkColorScheme().copy(primary: const Color(0xFFE2601F));
 }
 
 /// Pastel course colors, each a (fill, ink) pair per brightness.
@@ -66,7 +64,7 @@ class CoursePalette {
 }
 
 /// The type scale from the design spec: one family (system MiSans), three
-/// weights, nine sizes, 11 at the smallest. Digits are always tabular.
+/// weights (400 / 500 / 600), nine sizes, 11 at the smallest. Digits are always tabular.
 class TypeScale {
   static const _tabular = [FontFeature.tabularFigures()];
 
@@ -81,11 +79,11 @@ class TypeScale {
       );
 
   static final timer = _style(40, 48, FontWeight.w500);
-  static final page = _style(32, 40, FontWeight.w700);
-  static final prompt = _style(24, 34, FontWeight.w700);
-  static final stat = _style(24, 30, FontWeight.w700);
-  static final hero = _style(20, 28, FontWeight.w700);
-  static final card = _style(18, 26, FontWeight.w700);
+  static final page = _style(32, 40, FontWeight.w600);
+  static final prompt = _style(24, 34, FontWeight.w600);
+  static final stat = _style(24, 30, FontWeight.w600);
+  static final hero = _style(20, 28, FontWeight.w600);
+  static final card = _style(18, 26, FontWeight.w600);
   static final listTitle = _style(16, 22, FontWeight.w500);
   static final body = _style(16, 24, FontWeight.w400);
   static final time = _style(14, 20, FontWeight.w500);
@@ -99,21 +97,24 @@ class TypeScale {
 /// Shorthand for the colors pages use most.
 class Palette {
   Palette(BuildContext context)
-      : colors = MiuixTheme.of(context).colors,
-        dark = MiuixTheme.of(context).brightness == Brightness.dark;
+    : colors = MiuixTheme.of(context).colors,
+      dark = MiuixTheme.of(context).brightness == Brightness.dark;
 
   final MiuixColors colors;
   final bool dark;
 
   Color get ink => dark ? const Color(0xFFEDEDED) : const Color(0xFF1A1A1A);
-  Color get secondary => dark ? const Color(0xFF9A9A9F) : const Color(0xFF6B6B6F);
+  Color get secondary =>
+      dark ? const Color(0xFF9A9A9F) : const Color(0xFF5C5C61);
   Color get surface => colors.surface;
   Color get card => colors.surfaceContainer;
   Color get line => colors.dividerLine;
   Color get accentText => Brand.accentText(dark);
   Color get tint => Brand.tint(dark);
-  Color get ghostFill => dark ? const Color(0xFF2A2A2C) : const Color(0xFFEFEFF1);
-  Color get ghostInk => dark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
+  Color get ghostFill =>
+      dark ? const Color(0xFF2A2A2C) : const Color(0xFFEFEFF1);
+  Color get ghostInk =>
+      dark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
 }
 
 const weekdayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];

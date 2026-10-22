@@ -20,7 +20,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _fontDir = '/usr/share/fonts/adobe-source-han-sans-cn-fonts';
-final _miSans = '${Platform.environment['HOME']}/.pub-cache/hosted/pub.dev/flutter_miuix-1.3.0/example/fonts/MiSans-Normal.ttf';
+final _miSans =
+    '${Platform.environment['HOME']}/.pub-cache/hosted/pub.dev/flutter_miuix-1.3.0/example/fonts/MiSans-Normal.ttf';
 
 Future<void> _loadFonts() async {
   for (final family in ['Roboto', '']) {
@@ -35,18 +36,24 @@ Future<void> _loadFonts() async {
   }
 }
 
-Course _course(String name, int weekday, int start, int end, String room, String teacher,
-        {List<int>? weeks}) =>
-    Course(
-      name: name,
-      weekday: weekday,
-      startPeriod: start,
-      endPeriod: end,
-      weeks: weeks ?? [for (var week = 1; week <= 16; week++) week],
-      campus: '',
-      room: room,
-      teacher: teacher,
-    );
+Course _course(
+  String name,
+  int weekday,
+  int start,
+  int end,
+  String room,
+  String teacher, {
+  List<int>? weeks,
+}) => Course(
+  name: name,
+  weekday: weekday,
+  startPeriod: start,
+  endPeriod: end,
+  weeks: weeks ?? [for (var week = 1; week <= 16; week++) week],
+  campus: '',
+  room: room,
+  teacher: teacher,
+);
 
 AppState _state(DateTime now, {bool dark = false}) {
   final monday = DateTime(now.year, now.month, now.day - (now.weekday - 1));
@@ -54,7 +61,9 @@ AppState _state(DateTime now, {bool dark = false}) {
   final today = DateTime(now.year, now.month, now.day);
   final state = AppState()
     ..loading = false
-    ..appearance = AppearanceSettings(themeMode: dark ? AppThemeMode.dark : AppThemeMode.light)
+    ..appearance = AppearanceSettings(
+      themeMode: dark ? AppThemeMode.dark : AppThemeMode.light,
+    )
     ..timetable = Timetable(
       semester: '2026-2027年第1学期',
       className: '计科 2401',
@@ -70,25 +79,66 @@ AppState _state(DateTime now, {bool dark = false}) {
         _course('高等数学 A', 4, 1, 2, '教 1-305', '王老师'),
         _course('马克思主义基本原理', 4, 3, 4, '教 3-201', '李老师'),
         _course('离散数学', 4, 5, 6, '实训楼北 206', '刘老师'),
-        _course('离散数学', 5, 3, 4, '实训楼北 206', '刘老师', weeks: [1, 3, 5, 7, 9, 11, 13, 15]),
+        _course(
+          '离散数学',
+          5,
+          3,
+          4,
+          '实训楼北 206',
+          '刘老师',
+          weeks: [1, 3, 5, 7, 9, 11, 13, 15],
+        ),
         _course('形势与政策', 5, 9, 10, '教 2-101', '周老师', weeks: [2, 4, 6, 8]),
         _course('程序设计实践', 5, 9, 10, '实训楼北 101', '吴老师', weeks: [7, 8, 9]),
       ],
     )
     ..plans = [
-      PlanItem(id: 'a', title: 'MIT 16.01 第 4 讲', group: 'MIT 16.01', date: today, startPeriod: 3, endPeriod: 4),
-      PlanItem(id: 'b', title: '18.06 习题 3', group: '18.06 线代', date: today, startPeriod: 7, endPeriod: 8),
-      PlanItem(id: 'c', title: 'MIT 16.01 第 3 讲', group: 'MIT 16.01', date: today.subtract(const Duration(days: 1)), startPeriod: 5, endPeriod: 6, done: true),
+      PlanItem(
+        id: 'a',
+        title: 'MIT 16.01 第 4 讲',
+        group: 'MIT 16.01',
+        date: today,
+        startPeriod: 3,
+        endPeriod: 4,
+      ),
+      PlanItem(
+        id: 'b',
+        title: '18.06 习题 3',
+        group: '18.06 线代',
+        date: today,
+        startPeriod: 7,
+        endPeriod: 8,
+      ),
+      PlanItem(
+        id: 'c',
+        title: 'MIT 16.01 第 3 讲',
+        group: 'MIT 16.01',
+        date: today.subtract(const Duration(days: 1)),
+        startPeriod: 5,
+        endPeriod: 6,
+        done: true,
+      ),
       const PlanItem(id: 'd', title: '第 5 讲：动量方程', group: 'MIT 16.01'),
       const PlanItem(id: 'e', title: '第 6 讲：能量方程', group: 'MIT 16.01'),
-      const PlanItem(id: 'f', title: 'PSet 2', group: 'MIT 16.01', deferCount: 1),
+      const PlanItem(
+        id: 'f',
+        title: 'PSet 2',
+        group: 'MIT 16.01',
+        deferCount: 1,
+      ),
       const PlanItem(id: 'g', title: 'Week 2 Arrays', group: 'CS50'),
     ]
     ..journal = [JournalEntry(date: today, morning: '学完 16.01 第 4 讲')];
   return state;
 }
 
-Future<void> _shoot(WidgetTester tester, String name, {required Widget Function(AppState) build, bool dark = false, Future<void> Function()? before}) async {
+Future<void> _shoot(
+  WidgetTester tester,
+  String name, {
+  required Widget Function(AppState) build,
+  bool dark = false,
+  Future<void> Function()? before,
+}) async {
   final state = _state(DateTime.now(), dark: dark);
   await tester.pumpWidget(build(state));
   await tester.pump(const Duration(milliseconds: 600));
@@ -96,7 +146,10 @@ Future<void> _shoot(WidgetTester tester, String name, {required Widget Function(
   for (var i = 0; i < 20; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
-  await expectLater(find.byType(MaterialApp), matchesGoldenFile('screenshots/$name.png'));
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFile('screenshots/$name.png'),
+  );
 }
 
 void main() {
@@ -116,43 +169,112 @@ void main() {
   for (final dark in [false, true]) {
     final suffix = dark ? '_dark' : '';
     testWidgets('today$suffix', (tester) async {
-      await _shoot(tester, 'today$suffix', dark: dark, build: (state) => CourseTableApp(state: state));
+      await _shoot(
+        tester,
+        'today$suffix',
+        dark: dark,
+        build: (state) => CourseTableApp(state: state),
+      );
     });
 
     testWidgets('week$suffix', (tester) async {
-      await _shoot(tester, 'week$suffix', dark: dark, build: (state) => CourseTableApp(state: state), before: () async {
-        await tester.tap(find.text('课表').last);
-      });
+      await _shoot(
+        tester,
+        'week$suffix',
+        dark: dark,
+        build: (state) => CourseTableApp(state: state),
+        before: () async {
+          await tester.tap(find.text('课表').last);
+        },
+      );
     });
 
     testWidgets('plan$suffix', (tester) async {
-      await _shoot(tester, 'plan$suffix', dark: dark, build: (state) => CourseTableApp(state: state), before: () async {
-        await tester.tap(find.text('里课').last);
-      });
+      await _shoot(
+        tester,
+        'plan$suffix',
+        dark: dark,
+        build: (state) => CourseTableApp(state: state),
+        before: () async {
+          await tester.tap(find.text('自学').last);
+        },
+      );
     });
 
     testWidgets('settings$suffix', (tester) async {
-      await _shoot(tester, 'settings$suffix', dark: dark, build: (state) => CourseTableApp(state: state), before: () async {
-        await tester.tap(find.text('设置').last);
-      });
+      await _shoot(
+        tester,
+        'settings$suffix',
+        dark: dark,
+        build: (state) => CourseTableApp(state: state),
+        before: () async {
+          await tester.tap(find.text('设置').last);
+        },
+      );
     });
   }
 
   testWidgets('semester', (tester) async {
-    await _shoot(tester, 'semester', build: (state) => CourseTableApp(state: state), before: () async {
-      navigatorKey.currentState!.push(SlideRoute((_) => const SemesterPage()));
-    });
+    await _shoot(
+      tester,
+      'semester',
+      build: (state) => CourseTableApp(state: state),
+      before: () async {
+        navigatorKey.currentState!.push(
+          SlideRoute((_) => const SemesterPage()),
+        );
+      },
+    );
   });
 
   testWidgets('morning', (tester) async {
-    await _shoot(tester, 'morning', build: (state) => CourseTableApp(state: state), before: () async {
-      navigatorKey.currentState!.push(SlideRoute((_) => const ReflectionPage(evening: false)));
-    });
+    await _shoot(
+      tester,
+      'morning',
+      build: (state) => CourseTableApp(state: state),
+      before: () async {
+        navigatorKey.currentState!.push(
+          SlideRoute(
+            (_) => const ReflectionPage(evening: false),
+            ambient: false,
+          ),
+        );
+      },
+    );
   });
 
   testWidgets('evening', (tester) async {
-    await _shoot(tester, 'evening', build: (state) => CourseTableApp(state: state), before: () async {
-      navigatorKey.currentState!.push(SlideRoute((_) => const ReflectionPage(evening: true)));
-    });
+    await _shoot(
+      tester,
+      'evening',
+      build: (state) => CourseTableApp(state: state),
+      before: () async {
+        navigatorKey.currentState!.push(
+          SlideRoute(
+            (_) => const ReflectionPage(evening: true),
+            ambient: false,
+          ),
+        );
+      },
+    );
   });
+
+  // Accessibility guidelines on every tab: 48 dp tap targets and labelled
+  // buttons.
+  for (final tab in ['今天', '课表', '自学', '设置']) {
+    testWidgets('a11y $tab', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(CourseTableApp(state: _state(DateTime.now())));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.tap(find.text(tab).last);
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      // textContrastGuideline is not asserted: it samples rendered pixels
+      // and misreads thin CJK strokes over the gradient as background.
+      handle.dispose();
+    });
+  }
 }

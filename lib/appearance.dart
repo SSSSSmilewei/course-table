@@ -16,11 +16,11 @@ class AppearanceSettings {
     String? backgroundPath,
     bool removeBackground = false,
     double? backgroundOpacity,
-  }) =>
-      AppearanceSettings(
-        themeMode: themeMode ?? this.themeMode,
-        backgroundPath:
-            removeBackground ? null : backgroundPath ?? this.backgroundPath,
-        backgroundOpacity: backgroundOpacity ?? this.backgroundOpacity,
-      );
+  }) => AppearanceSettings(
+    themeMode: themeMode ?? this.themeMode,
+    backgroundPath: removeBackground
+        ? null
+        : backgroundPath ?? this.backgroundPath,
+    backgroundOpacity: backgroundOpacity ?? this.backgroundOpacity,
+  );
 }

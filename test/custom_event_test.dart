@@ -34,7 +34,9 @@ void main() {
   });
 
   test('daily events are sorted by start time', () {
-    expect(customEventsForDate([weekly, once], DateTime(2026, 6, 16)), [weekly]);
+    expect(customEventsForDate([weekly, once], DateTime(2026, 6, 16)), [
+      weekly,
+    ]);
     expect(weekly.startOn(DateTime(2026, 6, 23)), DateTime(2026, 6, 23, 18));
   });
 }

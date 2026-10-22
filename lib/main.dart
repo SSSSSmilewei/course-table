@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart' show MaterialApp, ThemeData, ColorScheme, NoSplash, Typography;
+import 'package:flutter/material.dart'
+    show MaterialApp, ThemeData, ColorScheme, NoSplash, Typography;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_miuix/miuix.dart';
 
@@ -36,28 +37,30 @@ class CourseTableApp extends StatelessWidget {
           },
           lightColors: Brand.light(),
           darkColors: Brand.dark(),
-          child: Builder(builder: (context) {
-            final theme = MiuixTheme.of(context);
-            // MaterialApp only hosts localizations and text editing for the
-            // miuix widgets; every visible control is a Miuix* widget.
-            return MaterialApp(
-              navigatorKey: navigatorKey,
-              debugShowCheckedModeBanner: false,
-              title: '课表',
-              theme: ThemeData(
-                brightness: theme.brightness,
-                // The 2014 type set carries no line height or letter spacing,
-                // so nothing leaks into miuix text through DefaultTextStyle.
-                typography: Typography.material2014(),
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: Brand.accent,
+          child: Builder(
+            builder: (context) {
+              final theme = MiuixTheme.of(context);
+              // MaterialApp only hosts localizations and text editing for the
+              // miuix widgets; every visible control is a Miuix* widget.
+              return MaterialApp(
+                navigatorKey: navigatorKey,
+                debugShowCheckedModeBanner: false,
+                title: '课表',
+                theme: ThemeData(
                   brightness: theme.brightness,
+                  // The 2014 type set carries no line height or letter spacing,
+                  // so nothing leaks into miuix text through DefaultTextStyle.
+                  typography: Typography.material2014(),
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: Brand.accent,
+                    brightness: theme.brightness,
+                  ),
+                  splashFactory: NoSplash.splashFactory,
                 ),
-                splashFactory: NoSplash.splashFactory,
-              ),
-              home: const AppShell(),
-            );
-          }),
+                home: const AppShell(),
+              );
+            },
+          ),
         ),
       ),
     );

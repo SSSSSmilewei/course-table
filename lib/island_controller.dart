@@ -23,7 +23,8 @@ class IslandCapability {
 
   bool get isHyperOs => protocol >= 1;
 
-  factory IslandCapability.fromMap(Map<Object?, Object?> map) => IslandCapability(
+  factory IslandCapability.fromMap(Map<Object?, Object?> map) =>
+      IslandCapability(
         protocol: (map['protocol'] as num?)?.toInt() ?? 0,
         supportsIsland: map['supportsIsland'] as bool? ?? false,
         hasFocusPermission: map['hasFocusPermission'] as bool? ?? false,
@@ -33,9 +34,7 @@ class IslandCapability {
   /// A short, user-facing description of what the island will look like.
   String get description {
     if (supportsIsland) {
-      return hasFocusPermission
-          ? '运行中，显示为小米超级岛'
-          : '运行中，但未开启焦点通知权限，将显示为普通通知';
+      return hasFocusPermission ? '运行中，显示为小米超级岛' : '运行中，但未开启焦点通知权限，将显示为普通通知';
     }
     if (isHyperOs) {
       return hasFocusPermission
@@ -58,19 +57,23 @@ class IslandController {
 
   Future<bool> isEnabled() async {
     if (!Platform.isAndroid) return false;
-    return (await SharedPreferences.getInstance()).getBool(_enabledKey) ?? false;
+    return (await SharedPreferences.getInstance()).getBool(_enabledKey) ??
+        false;
   }
 
   Future<IslandCapability?> capability() async {
     if (!Platform.isAndroid) return null;
-    final map = await _channel.invokeMethod<Map<Object?, Object?>>('capability');
+    final map = await _channel.invokeMethod<Map<Object?, Object?>>(
+      'capability',
+    );
     return map == null ? null : IslandCapability.fromMap(map);
   }
 
   /// Returns false when the device has no activity for the notification page.
   Future<bool> openNotificationSettings() async {
     if (!Platform.isAndroid) return false;
-    return await _channel.invokeMethod<bool>('openNotificationSettings') ?? false;
+    return await _channel.invokeMethod<bool>('openNotificationSettings') ??
+        false;
   }
 
   /// Returns false when neither the MIUI autostart page nor the app details page

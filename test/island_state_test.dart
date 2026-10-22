@@ -30,7 +30,10 @@ void main() {
   );
 
   test('courseEnd adds 45 minutes to the last period start', () {
-    expect(courseEnd(DateTime(2026, 3, 4), course), DateTime(2026, 3, 4, 9, 40));
+    expect(
+      courseEnd(DateTime(2026, 3, 4), course),
+      DateTime(2026, 3, 4, 9, 40),
+    );
     const single = Course(
       name: '体育',
       weekday: 3,
@@ -41,7 +44,10 @@ void main() {
       room: '',
       teacher: '',
     );
-    expect(courseEnd(DateTime(2026, 3, 4), single), DateTime(2026, 3, 4, 8, 45));
+    expect(
+      courseEnd(DateTime(2026, 3, 4), single),
+      DateTime(2026, 3, 4, 8, 45),
+    );
     const last = Course(
       name: '晚自习',
       weekday: 3,
@@ -61,8 +67,11 @@ void main() {
       final next = periodStartTimes[i + 1];
       final endMinutes = current.$1 * 60 + current.$2 + periodLengthMinutes;
       final nextMinutes = next.$1 * 60 + next.$2;
-      expect(endMinutes, lessThanOrEqualTo(nextMinutes),
-          reason: 'period ${i + 1} must end before period ${i + 2} starts');
+      expect(
+        endMinutes,
+        lessThanOrEqualTo(nextMinutes),
+        reason: 'period ${i + 1} must end before period ${i + 2} starts',
+      );
     }
   });
 
@@ -71,13 +80,19 @@ void main() {
   });
 
   test('currentCourse hits at start (inclusive) and inside', () {
-    expect(currentCourse(timetable, DateTime(2026, 3, 4, 8, 0))?.course.name,
-        '离散数学');
-    expect(currentCourse(timetable, DateTime(2026, 3, 4, 8, 44))?.course.name,
-        '离散数学');
+    expect(
+      currentCourse(timetable, DateTime(2026, 3, 4, 8, 0))?.course.name,
+      '离散数学',
+    );
+    expect(
+      currentCourse(timetable, DateTime(2026, 3, 4, 8, 44))?.course.name,
+      '离散数学',
+    );
     // Break between periods 1 and 2 is still class time (08:45-08:55).
-    expect(currentCourse(timetable, DateTime(2026, 3, 4, 8, 50))?.course.name,
-        '离散数学');
+    expect(
+      currentCourse(timetable, DateTime(2026, 3, 4, 8, 50))?.course.name,
+      '离散数学',
+    );
   });
 
   test('currentCourse is null at end (exclusive) and after', () {

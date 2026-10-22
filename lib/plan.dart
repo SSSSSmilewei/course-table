@@ -29,7 +29,8 @@ class PlanItem {
   /// How many times the card went back to the backlog unfinished.
   final int deferCount;
 
-  bool get scheduled => date != null && startPeriod != null && endPeriod != null;
+  bool get scheduled =>
+      date != null && startPeriod != null && endPeriod != null;
 
   bool occupies(DateTime day, int period) =>
       scheduled &&
@@ -38,26 +39,26 @@ class PlanItem {
       period <= endPeriod!;
 
   PlanItem placed(DateTime day, int start, int end) => PlanItem(
-        id: id,
-        title: title,
-        group: group,
-        note: note,
-        date: dateOnly(day),
-        startPeriod: start,
-        endPeriod: end,
-        done: done,
-        deferCount: deferCount,
-      );
+    id: id,
+    title: title,
+    group: group,
+    note: note,
+    date: dateOnly(day),
+    startPeriod: start,
+    endPeriod: end,
+    done: done,
+    deferCount: deferCount,
+  );
 
   /// Back to the backlog; counts as a deferral when it was placed but not done.
   PlanItem unplaced() => PlanItem(
-        id: id,
-        title: title,
-        group: group,
-        note: note,
-        done: false,
-        deferCount: scheduled && !done ? deferCount + 1 : deferCount,
-      );
+    id: id,
+    title: title,
+    group: group,
+    note: note,
+    done: false,
+    deferCount: scheduled && !done ? deferCount + 1 : deferCount,
+  );
 
   PlanItem copyWith({String? title, String? group, String? note, bool? done}) =>
       PlanItem(
@@ -73,28 +74,30 @@ class PlanItem {
       );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'group': group,
-        'note': note,
-        'date': date?.toIso8601String().split('T').first,
-        'startPeriod': startPeriod,
-        'endPeriod': endPeriod,
-        'done': done,
-        'deferCount': deferCount,
-      };
+    'id': id,
+    'title': title,
+    'group': group,
+    'note': note,
+    'date': date?.toIso8601String().split('T').first,
+    'startPeriod': startPeriod,
+    'endPeriod': endPeriod,
+    'done': done,
+    'deferCount': deferCount,
+  };
 
   factory PlanItem.fromJson(Map<String, dynamic> json) => PlanItem(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        group: json['group'] as String? ?? '',
-        note: json['note'] as String? ?? '',
-        date: json['date'] == null ? null : DateTime.tryParse(json['date'] as String),
-        startPeriod: json['startPeriod'] as int?,
-        endPeriod: json['endPeriod'] as int?,
-        done: json['done'] as bool? ?? false,
-        deferCount: json['deferCount'] as int? ?? 0,
-      );
+    id: json['id'] as String,
+    title: json['title'] as String,
+    group: json['group'] as String? ?? '',
+    note: json['note'] as String? ?? '',
+    date: json['date'] == null
+        ? null
+        : DateTime.tryParse(json['date'] as String),
+    startPeriod: json['startPeriod'] as int?,
+    endPeriod: json['endPeriod'] as int?,
+    done: json['done'] as bool? ?? false,
+    deferCount: json['deferCount'] as int? ?? 0,
+  );
 }
 
 /// The plan card placed at [period] on [day], if any.
@@ -111,29 +114,33 @@ List<PlanItem> plansForDate(List<PlanItem> items, DateTime day) =>
 
 /// One day's morning and evening reflection.
 class JournalEntry {
-  const JournalEntry({required this.date, this.morning = '', this.evening = ''});
+  const JournalEntry({
+    required this.date,
+    this.morning = '',
+    this.evening = '',
+  });
 
   final DateTime date;
   final String morning;
   final String evening;
 
   JournalEntry copyWith({String? morning, String? evening}) => JournalEntry(
-        date: date,
-        morning: morning ?? this.morning,
-        evening: evening ?? this.evening,
-      );
+    date: date,
+    morning: morning ?? this.morning,
+    evening: evening ?? this.evening,
+  );
 
   Map<String, dynamic> toJson() => {
-        'date': date.toIso8601String().split('T').first,
-        'morning': morning,
-        'evening': evening,
-      };
+    'date': date.toIso8601String().split('T').first,
+    'morning': morning,
+    'evening': evening,
+  };
 
   factory JournalEntry.fromJson(Map<String, dynamic> json) => JournalEntry(
-        date: DateTime.parse(json['date'] as String),
-        morning: json['morning'] as String? ?? '',
-        evening: json['evening'] as String? ?? '',
-      );
+    date: DateTime.parse(json['date'] as String),
+    morning: json['morning'] as String? ?? '',
+    evening: json['evening'] as String? ?? '',
+  );
 }
 
 /// Settings for the morning / evening one-minute reflection.
@@ -147,7 +154,7 @@ class ReflectionSettings {
   });
 
   static const defaultMorningPrompt = '你今天要做什么？\n最重要的一件事是什么？';
-  static const defaultEveningPrompt = '今天的里课完成了几节？\n明天想改什么？';
+  static const defaultEveningPrompt = '今天的自学完成了几项？\n明天想改什么？';
 
   final bool enabled;
   final int morningMinutes;
@@ -161,22 +168,21 @@ class ReflectionSettings {
     int? eveningMinutes,
     String? morningPrompt,
     String? eveningPrompt,
-  }) =>
-      ReflectionSettings(
-        enabled: enabled ?? this.enabled,
-        morningMinutes: morningMinutes ?? this.morningMinutes,
-        eveningMinutes: eveningMinutes ?? this.eveningMinutes,
-        morningPrompt: morningPrompt ?? this.morningPrompt,
-        eveningPrompt: eveningPrompt ?? this.eveningPrompt,
-      );
+  }) => ReflectionSettings(
+    enabled: enabled ?? this.enabled,
+    morningMinutes: morningMinutes ?? this.morningMinutes,
+    eveningMinutes: eveningMinutes ?? this.eveningMinutes,
+    morningPrompt: morningPrompt ?? this.morningPrompt,
+    eveningPrompt: eveningPrompt ?? this.eveningPrompt,
+  );
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'morningMinutes': morningMinutes,
-        'eveningMinutes': eveningMinutes,
-        'morningPrompt': morningPrompt,
-        'eveningPrompt': eveningPrompt,
-      };
+    'enabled': enabled,
+    'morningMinutes': morningMinutes,
+    'eveningMinutes': eveningMinutes,
+    'morningPrompt': morningPrompt,
+    'eveningPrompt': eveningPrompt,
+  };
 
   factory ReflectionSettings.fromJson(Map<String, dynamic> json) =>
       ReflectionSettings(

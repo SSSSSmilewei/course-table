@@ -7,6 +7,8 @@ import '../custom_event.dart';
 import '../models.dart';
 import 'actions.dart';
 import 'common.dart';
+import 'icons.dart';
+import 'glass.dart';
 import 'semester_page.dart';
 import 'sheets.dart';
 import 'tokens.dart';
@@ -32,7 +34,10 @@ class WeekPageState extends State<WeekPage> {
   void initState() {
     super.initState();
     // The now line only needs minute precision.
-    _clock = Timer.periodic(const Duration(seconds: 30), (_) => setState(() => _now = DateTime.now()));
+    _clock = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => setState(() => _now = DateTime.now()),
+    );
   }
 
   @override
@@ -52,8 +57,11 @@ class WeekPageState extends State<WeekPage> {
 
   void _animateTo(int week, Timetable table) {
     final target = week.clamp(1, table.totalWeeks);
-    _pages?.animateToPage(target - 1,
-        duration: const Duration(milliseconds: 360), curve: const Cubic(0.22, 1, 0.36, 1));
+    _pages?.animateToPage(
+      target - 1,
+      duration: const Duration(milliseconds: 360),
+      curve: const Cubic(0.22, 1, 0.36, 1),
+    );
   }
 
   @override
@@ -66,18 +74,31 @@ class WeekPageState extends State<WeekPage> {
         containerColor: const Color(0x00000000),
         content: (padding) => Padding(
           padding: padding,
-          child: Column(children: [
-            const PageHeader(title: '课表'),
-            const SizedBox(height: 24),
-            PageCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('导入课表后，这里一屏显示整周。', style: TypeScale.secondary.copyWith(color: palette.secondary)),
-                const SizedBox(height: 16),
-                PrimaryButton(text: '导入课表', onPressed: () => importTimetable(context)),
-              ]),
-            ),
-          ]),
+          child: Column(
+            children: [
+              const PageHeader(title: '课表'),
+              const SizedBox(height: 24),
+              PageCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '导入课表后，这里一屏显示整周。',
+                      style: TypeScale.secondary.copyWith(
+                        color: palette.secondary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    PrimaryButton(
+                      text: '导入课表',
+                      onPressed: () => importTimetable(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -90,7 +111,7 @@ class WeekPageState extends State<WeekPage> {
     final range = monday == null || sunday == null
         ? table.semester
         : '${monday.month}/${monday.day}–${sunday.month}/${sunday.day}'
-            '${_week == _currentWeek(table) && table.rawWeekFor(_now) == _week ? ' · 本周' : ''}';
+              '${_week == _currentWeek(table) && table.rawWeekFor(_now) == _week ? ' · 本周' : ''}';
 
     return MiuixScaffold(
       containerColor: const Color(0x00000000),
@@ -104,45 +125,58 @@ class WeekPageState extends State<WeekPage> {
                   title: '第 $_week 周',
                   meta: range,
                   onTitleTap: () => setState(() => _pickerOpen = true),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    RoundIconButton(
-                      icon: 'chevronBackward',
-                      label: '上一周',
-                      onPressed: _week > 1 ? () => _animateTo(_week - 1, table) : null,
-                    ),
-                    const SizedBox(width: 4),
-                    MiuixTextButton('本周', onPressed: () => _animateTo(_currentWeek(table), table)),
-                    const SizedBox(width: 4),
-                    RoundIconButton(
-                      icon: 'chevronForward',
-                      label: '下一周',
-                      onPressed: _week < table.totalWeeks ? () => _animateTo(_week + 1, table) : null,
-                    ),
-                  ]),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RoundIconButton(
+                        icon: AppIcons.chevronLeft,
+                        label: '上一周',
+                        onPressed: _week > 1
+                            ? () => _animateTo(_week - 1, table)
+                            : null,
+                      ),
+                      const SizedBox(width: 4),
+                      GlassTextButton(
+                        text: '本周',
+                        onPressed: () => _animateTo(_currentWeek(table), table),
+                      ),
+                      const SizedBox(width: 4),
+                      RoundIconButton(
+                        icon: AppIcons.chevronRight,
+                        label: '下一周',
+                        onPressed: _week < table.totalWeeks
+                            ? () => _animateTo(_week + 1, table)
+                            : null,
+                      ),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: Row(children: [
-                    Expanded(
-                      child: MiuixTabRow(
-                        tabs: layerLabels,
-                        selectedTabIndex: _layer.index,
-                        height: 38,
-                        onTabSelected: (index) => setState(() => _layer = Layer.values[index]),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GlassSegmented(
+                          labels: layerLabels,
+                          selected: _layer.index,
+                          height: 44,
+                          onChanged: (index) =>
+                              setState(() => _layer = Layer.values[index]),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    RoundIconButton(
-                      icon: 'listView',
-                      label: '学期总览',
-                      onPressed: () async {
-                        final week = await Navigator.of(context).push<int>(
-                          SlideRoute((_) => const SemesterPage()),
-                        );
-                        if (week != null) jumpToWeek(week);
-                      },
-                    ),
-                  ]),
+                      const SizedBox(width: 8),
+                      RoundIconButton(
+                        icon: AppIcons.list,
+                        label: '学期总览',
+                        onPressed: () async {
+                          final week = await Navigator.of(
+                            context,
+                          ).push<int>(SlideRoute((_) => const SemesterPage()));
+                          if (week != null) jumpToWeek(week);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: PageView.builder(
@@ -158,8 +192,10 @@ class WeekPageState extends State<WeekPage> {
                         plans: state.plans,
                         showOtherWeeks: state.showOtherWeeks,
                         now: _now,
-                        onCourseTap: (course, date) => _sheet.open(CourseSheetRequest(course, date)),
-                        onPlanTap: (plan) => _sheet.open(PlanSheetRequest(plan.id)),
+                        onCourseTap: (course, date) =>
+                            _sheet.open(CourseSheetRequest(course, date)),
+                        onPlanTap: (plan) =>
+                            _sheet.open(PlanSheetRequest(plan.id)),
                       ),
                     ),
                   ),
@@ -190,7 +226,12 @@ class WeekPageState extends State<WeekPage> {
 
 /// All weeks as a grid; each tile shows how busy the week is.
 class _WeekPicker extends StatelessWidget {
-  const _WeekPicker({required this.table, required this.selected, required this.current, required this.onPick});
+  const _WeekPicker({
+    required this.table,
+    required this.selected,
+    required this.current,
+    required this.onPick,
+  });
 
   final Timetable table;
   final int selected;
@@ -200,8 +241,14 @@ class _WeekPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Palette(context);
-    final counts = [for (var week = 1; week <= table.totalWeeks; week++) table.coursesForWeek(week).length];
-    final busiest = counts.fold<int>(1, (max, count) => count > max ? count : max);
+    final counts = [
+      for (var week = 1; week <= table.totalWeeks; week++)
+        table.coursesForWeek(week).length,
+    ];
+    final busiest = counts.fold<int>(
+      1,
+      (max, count) => count > max ? count : max,
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: GridView.count(
@@ -213,7 +260,7 @@ class _WeekPicker extends StatelessWidget {
         childAspectRatio: 1.1,
         children: [
           for (var week = 1; week <= table.totalWeeks; week++)
-            MiuixPressable(
+            Tappable(
               onPressed: () => onPick(week),
               shape: MiuixSquircleBorder(cornerRadius: 14),
               semanticLabel: '第 $week 周',
@@ -232,21 +279,36 @@ class _WeekPicker extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('$week',
-                        style: TypeScale.card.copyWith(
-                            color: week == selected ? const Color(0xFFFFFFFF) : palette.ink)),
+                    Text(
+                      '$week',
+                      style: TypeScale.card.copyWith(
+                        color: week == selected
+                            ? const Color(0xFFFFFFFF)
+                            : palette.ink,
+                      ),
+                    ),
                     // Busy bar: share of the busiest week's course count.
                     ClipRRect(
                       borderRadius: BorderRadius.circular(2),
                       child: SizedBox(
                         height: 4,
-                        child: Stack(children: [
-                          Container(color: week == selected ? const Color(0x38FFFFFF) : palette.ghostFill),
-                          FractionallySizedBox(
-                            widthFactor: counts[week - 1] / busiest,
-                            child: Container(color: week == selected ? const Color(0xFFFFFFFF) : Brand.accent),
-                          ),
-                        ]),
+                        child: Stack(
+                          children: [
+                            Container(
+                              color: week == selected
+                                  ? const Color(0x38FFFFFF)
+                                  : palette.ghostFill,
+                            ),
+                            FractionallySizedBox(
+                              widthFactor: counts[week - 1] / busiest,
+                              child: Container(
+                                color: week == selected
+                                    ? const Color(0xFFFFFFFF)
+                                    : Brand.accent,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
