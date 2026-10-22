@@ -32,6 +32,18 @@ void main() {
     expect(timetable.weekFor(DateTime(2027, 1, 1)), 20);
   });
 
+  test('shows no courses outside the semester', () {
+    final start = timetable.startDate!;
+    expect(timetable.rawWeekFor(start.subtract(const Duration(days: 3))), 0);
+    for (var offset = -14; offset < 0; offset++) {
+      expect(timetable.coursesForDate(start.add(Duration(days: offset))), isEmpty);
+    }
+    final afterEnd = start.add(Duration(days: timetable.totalWeeks * 7));
+    for (var offset = 0; offset < 14; offset++) {
+      expect(timetable.coursesForDate(afterEnd.add(Duration(days: offset))), isEmpty);
+    }
+  });
+
   test('filters courses by date using its teaching week and weekday', () {
     expect(timetable.coursesForDate(DateTime(2026, 3, 4)), [course]);
     expect(timetable.coursesForDate(DateTime(2026, 3, 5)), isEmpty);

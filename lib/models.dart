@@ -42,6 +42,9 @@ class Course {
       };
 }
 
+/// Number of periods in the built-in daily schedule (see periodStartTimes).
+const maxPeriods = 12;
+
 class Timetable {
   const Timetable({
     required this.semester,
@@ -79,10 +82,13 @@ class Timetable {
       courses.where((course) => course.weeks.contains(week)).toList();
 
   List<Course> coursesForDate(DateTime date) {
-    final week = weekFor(date);
+    final week = rawWeekFor(date);
     return courses
         .where((course) =>
-            course.weekday == date.weekday && course.weeks.contains(week))
+            course.weekday == date.weekday &&
+            course.weeks.contains(week) &&
+            course.startPeriod >= 1 &&
+            course.endPeriod <= maxPeriods)
         .toList()
       ..sort((a, b) => a.startPeriod.compareTo(b.startPeriod));
   }
@@ -93,10 +99,15 @@ class Timetable {
         .add(Duration(days: (week - 1) * 7 + weekday - 1));
   }
 
-  int weekFor(DateTime date) {
+  /// Teaching week for display, clamped into the semester.
+  int weekFor(DateTime date) => rawWeekFor(date).clamp(1, totalWeeks);
+
+  /// Unclamped teaching week: < 1 before the semester starts and
+  /// > [totalWeeks] after it ends, so no courses match those dates.
+  int rawWeekFor(DateTime date) {
     if (startDate == null) return 1;
-    final day = DateTime(date.year, date.month, date.day);
-    final first = DateTime(startDate!.year, startDate!.month, startDate!.day);
-    return (day.difference(first).inDays ~/ 7 + 1).clamp(1, totalWeeks);
+    final day = DateTime.utc(date.year, date.month, date.day);
+    final first = DateTime.utc(startDate!.year, startDate!.month, startDate!.day);
+    return (day.difference(first).inDays / 7).floor() + 1;
   }
 }

@@ -204,7 +204,8 @@ class IslandService : Service() {
         val start = table.startDateMillis ?: return 1
         val dayStart = startOfDay(date.timeInMillis)
         val diffDays = ((dayStart - start) / 86_400_000L).toInt()
-        return (diffDays / 7 + 1).coerceIn(1, table.totalWeeks)
+        // Unclamped: outside the semester no week matches, so no courses show.
+        return Math.floorDiv(diffDays, 7) + 1
     }
 
     private fun dartWeekday(date: Calendar): Int {
