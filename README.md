@@ -36,7 +36,7 @@ CourseTable 可以导入学校易班导出的旧版 `.xls` 课表文件，自动
 
 ## 下载安装
 
-前往 [Releases](https://github.com/dfsjiv/course-table/releases/latest)，按平台下载：
+前往 [Releases](https://github.com/SSSSSmilewei/course-table/releases/latest)，按平台下载：
 
 - 安卓：`app-arm64-v8a-release.apk`
 - Windows：`course-table-windows-x64.zip`，解压后运行 `course_table.exe`
@@ -128,10 +128,6 @@ Android 构建还需要使用 `cargo-ndk` 编译 Rust 动态库。项目当前�
 - iOS 和 Windows 版本尚未发布。
 - 当前只适配特定易班 `.xls` 课表结构。
 - 不同手机厂商的省电策略可能导致通知略有延迟。
-
-## License
-
-项目当前尚未添加开源许可证。添加许可证前，代码默认保留所有权利。
 
 ## 开源协议
 
