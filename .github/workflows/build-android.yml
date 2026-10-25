@@ -36,6 +36,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Static analysis
+        # 把错误写成 GitHub 注解，在提交页面就能看到是哪一行
+        run: |
+          set +e
+          dart analyze --no-fatal-warnings --format=machine > analyze.txt 2>&1
+          code=$?
+          grep '^ERROR' analyze.txt | awk -F'|' '{printf "::error file=%s,line=%s,col=%s::%s (%s)\n", $4, $5, $6, $8, $3}'
+          exit $code
+
       - name: Test Flutter code
         run: flutter test
 
