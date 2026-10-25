@@ -14,6 +14,7 @@ import '../reminders.dart';
 import '../platform_capabilities.dart';
 import 'actions.dart';
 import 'common.dart';
+import 'hiana_page.dart';
 import 'icons.dart';
 import 'schedule_page.dart';
 import 'tokens.dart';
@@ -558,6 +559,24 @@ class _SettingsPageState extends State<SettingsPage>
                       ),
                     ],
                   ],
+                ),
+              ),
+              const SectionLabel('协会'),
+              PageCard(
+                child: MiuixArrowPreference(
+                  title: '协会账号',
+                  startAction: const Padding(
+                    padding: EdgeInsets.only(right: 14),
+                    child: IconTile(AppIcons.graduation, color: TileColors.orange),
+                  ),
+                  summary: state.hiana == null
+                      ? '登录后导入协会课程、同步学习记录'
+                      : state.hianaError != null
+                          ? '${state.hiana!.name} · 上次同步没成功'
+                          : '${state.hiana!.name} · 已连接',
+                  onClick: () => Navigator.of(
+                    context,
+                  ).push(SlideRoute((_) => const HianaPage())),
                 ),
               ),
               const SectionLabel('日志'),

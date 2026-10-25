@@ -12,6 +12,8 @@ text = text.replace(
 text = text.replace(
     "<application",
     '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
+    # 连接协会平台（导入课程、同步学习记录）要联网；正式版默认没有这个权限
+    '    <uses-permission android:name="android.permission.INTERNET"/>\n'
     '    <application',
     1,
 )

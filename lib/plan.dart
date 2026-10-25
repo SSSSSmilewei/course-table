@@ -13,6 +13,8 @@ class PlanItem {
     this.endPeriod,
     this.done = false,
     this.deferCount = 0,
+    this.hianaCourse,
+    this.hianaUnit,
   });
 
   final String id;
@@ -28,6 +30,12 @@ class PlanItem {
 
   /// How many times the card went back to the backlog unfinished.
   final int deferCount;
+
+  /// 从协会平台导入的卡片：协会课程 slug 和单元 id。勾掉时会同步到协会。
+  final String? hianaCourse;
+  final String? hianaUnit;
+
+  bool get linked => hianaCourse != null && hianaUnit != null;
 
   bool get scheduled =>
       date != null && startPeriod != null && endPeriod != null;
@@ -48,6 +56,8 @@ class PlanItem {
     endPeriod: end,
     done: done,
     deferCount: deferCount,
+    hianaCourse: hianaCourse,
+    hianaUnit: hianaUnit,
   );
 
   /// Back to the backlog; counts as a deferral when it was placed but not done.
@@ -58,6 +68,8 @@ class PlanItem {
     note: note,
     done: false,
     deferCount: scheduled && !done ? deferCount + 1 : deferCount,
+    hianaCourse: hianaCourse,
+    hianaUnit: hianaUnit,
   );
 
   PlanItem copyWith({String? title, String? group, String? note, bool? done}) =>
@@ -71,6 +83,8 @@ class PlanItem {
         endPeriod: endPeriod,
         done: done ?? this.done,
         deferCount: deferCount,
+        hianaCourse: hianaCourse,
+        hianaUnit: hianaUnit,
       );
 
   Map<String, dynamic> toJson() => {
@@ -83,6 +97,8 @@ class PlanItem {
     'endPeriod': endPeriod,
     'done': done,
     'deferCount': deferCount,
+    if (hianaCourse != null) 'hianaCourse': hianaCourse,
+    if (hianaUnit != null) 'hianaUnit': hianaUnit,
   };
 
   factory PlanItem.fromJson(Map<String, dynamic> json) => PlanItem(
@@ -97,6 +113,8 @@ class PlanItem {
     endPeriod: json['endPeriod'] as int?,
     done: json['done'] as bool? ?? false,
     deferCount: json['deferCount'] as int? ?? 0,
+    hianaCourse: json['hianaCourse'] as String?,
+    hianaUnit: json['hianaUnit'] as String?,
   );
 }
 
