@@ -73,6 +73,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish latest APK
+        if: github.ref == 'refs/heads/main' # 只有 main 才更新 latest 发布，其他分支只留构建产物
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
